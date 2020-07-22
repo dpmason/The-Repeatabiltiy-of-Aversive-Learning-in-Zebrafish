@@ -1,0 +1,644 @@
+---
+title: "Spare"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+#knitr::opts_knit$set(root.dir = '/Users/dominicmason/OneDrive\ -\ UNSW/hons') #sets WD as project for all chunks - doesn't change directory for setup chunk
+
+#install.packages("pacman")
+#install.packages("ggThemeAssist")
+#install.packages("ggbeeswarm")
+#install.packages("rptR")
+#install.packages("lme4")
+#install.packages("lmerTest")
+#install.packages("wesanderson")
+#install.packages("forestplot")
+#install.packages("broom")
+#install.packages("ggbeeswarm")
+#install.packages("ggforce")
+#install.packages("cowplot")
+#install.packages("gridExtra")
+#install.packages("ggpubr")
+
+#install.packages("effects")
+#install.packages("sjPlot")
+library(effects)
+library(sjPlot)
+
+
+library(ggpubr)
+library(gridExtra)
+
+library(cowplot)
+library(rptR)
+library(lme4)
+library(ggplot2)
+library(ggforce)
+library(ggbeeswarm)
+
+#install.packages("tidyverse")
+library(tidyverse)
+pacman::p_load(readxl, tidyr, dplyr, magrittr, lubridate, stringr, purrr)
+
+library(lubridate)
+library(wesanderson)
+#library(broom)
+```
+
+FIX PREF OUTPUTS - was issue with taking out bootstraps for altering code
+
+NEED TO WORK OUT HOW TO NAME OBSERVATION AND MERGE DATA FRAMES - COMPLETE
+
+LOOK UP HOW TO GET GOOD AT MAKING FOREST PLOTS - COMPLETE
+
+COMMENT ON ALL CODE - NAME CHUNKS (GROUP CHUNKS ACCORDINGLY) - COMPLETE
+
+CONTINUE SEPARATED SEXES OUTPUTS - COMPLETE
+
+FIX BIND OUTPUT DATA FRAMES CHUNK => FUNCTION NOT WORKING - COMPLETE
+
+##data check experiment 1
+```{r data check before merge}
+str(e1_data)
+
+e1_data %>% count(marking) -> e1_data_count
+
+e1_data_count 
+
+e1_data %>% group_by(marking) %>% summarise(n=n()) -> e1_data_sum
+
+e1_data_sum
+
+e1_data %>% filter(zone == "CS") %>% group_by(type, marking, test, filepath, date, day, exp, tod, learning, exp_group) %>%
+  summarise(time = mean(time_min), arena = unique(arena)) -> e1_fil
+
+e1_fil %>% count(marking) -> e1_fil_count
+
+e1_fil_count
+
+e1_data %>% filter(marking %in% c("a7289", "a7695")) -> dup_data
+
+dup_data %>% filter(zone == "CS") %>% group_by(type, marking, test, filepath, date, day, exp, tod, learning, exp_group) %>%
+  summarise(time = mean(time_min), arena = unique(arena)) -> dup_fil_test
+
+dup_data
+
+str(e1)
+```
+```{r}
+# Save an object as a file, ready to import into other rmd document
+saveRDS(rpt_outputs, file = "rpt_outputs.rds")
+```
+
+##finding missing fish
+```{r}
+fish_check <- function(x){
+e1_data %>% filter(marking == x)
+}
+
+fish_check("a7426") -> a7426
+fish_check("a7330") -> a7330
+fish_check("a7417") -> a7417
+fish_check("a7586") -> a7586
+fish_check("a7463") -> a7463
+fish_check("a7342") -> a7342
+fish_check("a7329") -> a7329
+fish_check("a7364") -> a7364
+fish_check("a7287") -> a7287 #don't think this was a replacment fish unti exp2
+fish_check("a1111") -> a1111
+fish_check("a7042") -> a7042
+fish_check("a7704") -> a7704
+fish_check("a7174") -> a7174
+fish_check("a7197") -> a7197
+fish_check("a7012") -> a7012
+fish_check("a7097") -> a7097
+fish_check("a7271") -> a7271
+fish_check("a7447") -> a7447
+fish_check("a7557") -> a7557
+fish_check("a7584") -> a7584
+fish_check("a7745") -> a7745
+fish_check("a8106") -> a8106
+```
+removed from 01_import 
+```{r functions for filtering, eval = FAlSE}
+##not working how i want, so eval = F
+
+base6_probe2 <- function (x, y) {
+  x %>% filter(unit %in% c("UNIT1", "UNIT2", "UNIT3", "UNIT4", "UNIT5", "UNIT6", "PROBE1", "PROBE2")) %>% 
+  group_by(y) %>% #because missing data and e1_data have to be group_by differently
+  summarise(time = mean(time_min), arena = unique(arena)) %>%
+  add_diff
+}
+
+base2_probe2 <- function (x, y = "") {
+  x %>% filter(unit %in% c("UNIT5", "UNIT6", "PROBE1", "PROBE2")) %>%
+  group_by(y) %>%
+  summarise(time = mean(time_min), arena = unique(arena)) %>%
+  add_diff
+}
+
+
+base6_probe2(new_missing, c(type, marking, test, day)) -> missing_filter_test
+base6_probe2(e1_data, (type, marking, test, filepath, day) -> e1_filter_test
+base2_probe2(new_missing, y = type, marking, test, day) -> missing_filter_reduced_test
+base2_probe2(e1_data, y = type, marking, test, filepath, day) -> e1_filter_reduced_test
+```
+#Data Check Exp 2
+```{r exp 2 data check}
+e2_data %>% group_by(marking) %>% summarise(n=n()) -> e2_data_sum
+
+e2_data_sum
+```
+
+#Removed from 01_import
+```{r eval = F}
+##redundant due to function in 01_import
+arrange(allgb, fishID) -> allgb_arranged
+
+allgb_arranged %>% select(-fish_length, -fish_width, -fish_size) -> allgb_no_size
+
+arrange(e2gb, fishID) -> e2gb_arranged
+
+e2gb_arranged %>% select(-fish_length, -fish_width, -fish_size) -> e2gb_no_size
+
+arrange(e1, fishID) -> e1_arranged
+
+e1_arranged %>% select(-fish_length, -fish_width, -fish_size) ->e1_no_size
+
+arrange(allbg, fishID) -> allbg_arranged
+
+allbg_arranged %>% select(-fish_length, -fish_width, -fish_size) -> allbg_no_size
+
+arrange(first, fishID) -> first_arranged
+
+first_arranged %>% select(-fish_length, -fish_width, -fish_size) -> first_no_size
+
+arrange(second, fishID) -> second_arranged
+
+second_arranged %>% select(-fish_length, -fish_width, -fish_size) -> second_no_size
+
+arrange(third, fishID) -> third_arranged
+
+third_arranged %>% select(-fish_length, -fish_width, -fish_size) -> third_no_size
+```
+
+#Import Rpt Results
+```{r importing rpt results from file}
+##must use function in analysis tab rather than this
+read.csv("./data/rptcon.csv", header = TRUE) -> rptcon 
+read.csv("./data/rptpref.csv", header = TRUE) -> rptpref
+```
+
+#Check NAs
+```{r check NAs}
+sum(is.na(e1$sex)) #checking for NAs in sex variable
+
+sum(is.na(e1$difference)) #checking for NAs in difference variable
+```
+
+#Explore Data
+```{r check for anomallies}
+attach(allexp) #attached df to session
+search() #checks what is in the session
+str(allexp) #checks structure of df
+summary(sex) #gets summary of variable
+summary(fishID)
+```
+
+#More data checking
+```{r eval = FALSE}
+attach(allexp)
+
+ufishID <- unique(fishID) #creates list of unique fish IDs
+single <- match(ufishID, fishID) #
+usex <- sex[single] #creates a list of factors with 2 levels "female" & "male" - where female is 1 and male is 2
+
+data4 <- data.frame(ufishID = test, sex = usex)
+
+summary(data4)
+str(data4)
+head(data4, n = 20)
+
+detach(allexp)
+```
+
+#More Data Check
+```{r checking data}
+#some fish are ran more then expected...
+e1 %>% count(vars = fishID) -> count_e1
+
+count_e1
+
+e1 %>% filter(fishID %in% c("a7289", "a7695")) -> dup_e1
+
+dup_e1
+
+e1 %>% filter(fishID %in% c("a7205", "a7447")) -> test_e1
+
+test_e1
+
+e2 %>% count(fishID)
+
+count_e1
+
+e1 %>% group_by(fishID) %>% summarise(n=n()) -> e1_sum_post_merge
+
+e1_sum_post_merge
+
+e2 %>% group_by(fishID) %>% summarise(n=n()) -> e2_sum_post_merge
+
+e2_sum_post_merge
+
+##checking which exp are NA}
+is.na(e1$exp)
+
+which (is.na(e1$exp))
+
+e1 %>% filter(row_number() %in% c(98, 106, 114, 122)) -> exp_NAs
+
+exp_NAs
+
+##checking fish after DFs were merged
+fish_check_postmerge <- function(x){
+e1 %>% filter(fishID == x)
+}
+
+fish_check_postmerge("a7426") -> a7426_postmerge
+fish_check_postmerge("a7330") -> a7330_postmerge
+fish_check_postmerge("a7417") -> a7417_postmerge
+fish_check_postmerge("a7586") -> a7586_postmerge
+fish_check_postmerge("a7463") -> a7463_postmerge
+fish_check_postmerge("a7342") -> a7342_postmerge
+fish_check_postmerge("a7329") -> a7329_postmerge
+fish_check_postmerge("a7364") -> a7364_postmerge
+fish_check_postmerge("a7287") -> a7287_postmerge #don't think this was a replacment fish unti exp2
+fish_check_postmerge("a1111") -> a1111_postmerge
+fish_check_postmerge("a7042") -> a7042_postmerge
+fish_check_postmerge("a7704") -> a7704_postmerge
+fish_check_postmerge("a7174") -> a7174_postmerge
+fish_check_postmerge("a7197") -> a7197_postmerge
+fish_check_postmerge("a7012") -> a7012_postmerge
+fish_check_postmerge("a7097") -> a7097_postmerge
+fish_check_postmerge("a7271") -> a7271_postmerge
+fish_check_postmerge("a7447") -> a7447_postmerge
+fish_check_postmerge("a7557") -> a7557_postmerge
+fish_check_postmerge("a7584") -> a7584_postmerge
+fish_check_postmerge("a7745") -> a7745_postmerge
+fish_check_postmerge("a8106") -> a8106_postmerge
+```
+
+```{r}
+#third_no_size <- rpt(difference ~ day + (1 | fishID), grname = "fishID", data = third_no_size, datatype = "Gaussian", nboot = 0, npermut = 0)
+#third_no_size
+```
+
+```{r}
+#rpt_outputs <- rbind(all_con, single_gb, single_bg, first_both_single, second_both_single, third_both_single, all_both_single)
+
+#rownames(rpt_outputs) <- c("all_con", "single_gb", "single_bg", "first_both_single", "second_both_single", "third_both_single", "all_both_single") #renames observations
+
+#rpt_outputs %<>% rownames_col_to_con %>% rename_output_func
+
+#rownames(rpt_outputs) #checks observation names
+#colnames(rpt_outputs) #checks variable names
+
+#rbind(red_preference, gre_preference, check_preference, orange_preference) %>% rename_output_func -> pref_outputs #binds preference outputs
+
+#rownames(pref_outputs) <- c("red_preference", "gre_preference", "check_preference", "orange_preference") 
+
+#pref_outputs %<>% rownames_col_to_con
+
+#rpt_outputs
+
+#pref_outputs
+```
+
+```{r}
+#rbind(all_con_male, all_con_female, all_green_male, all_green_female, all_blue_male, all_blue_female, first_male, first_female, second_male, second_female, third_male, third_female, both_con_male, both_con_female) %>% rename_output_func -> rpt_outputs_sex #binds rpt outputs data frames
+
+#rownames(rpt_outputs_sex) <- c("all_con_male", "all_con_female", "all_green_male", "all_green_female", "all_blue_male", "all_blue_female", "first_male", "first_female", "second_male", "second_female", "third_male", "third_female", "both_con_male", "both_con_female") #renames observations
+
+#rpt_outputs_sex %<>% rownames_col_to_con
+
+#rbind(red_pref_male_output, red_pref_female_output, green_pref_male_output, green_pref_female_output, check_pref_male_output, check_pref_female_output, orange_pref_male_output, orange_pref_female_output) %>% rename_output_func -> pref_outputs_sex #binds preference outputs
+
+#rownames(pref_outputs_sex) <- c("red_pref_male_output", "red_pref_female_output", "green_pref_male_output", "green_pref_female_output", "check_pref_male_output", "check_pref_female_output", "orange_pref_male_output", "orange_pref_female_output") 
+
+#pref_outputs_sex %<>% rownames_col_to_con
+```
+
+condition	repeatability	SE	    lowCI	highCI	P[LRT]	P[permutation]
+across  	0.068	        0.036  	0	    0.103	  0.224	  0.04
+green	    0.008	        0.036 	0	    0.106	  0.448	  0.38
+blue    	0.152	        0.07    0.028 0.316	  0.00786	0.02
+GB1     	0	            0.05   	0	    0.163  	1   	  1
+GB2     	0.001	        0.008	  0	    0.026  	1	      0.36
+GB3     	0	            0.00   	0	    0.012 	1      	1
+allGB   	0.017       	0.026 	0     0.086 	0.266  	0.25
+
+condition	repeatability	SE  	lowCI	highCI	LRT	permutation
+red     	0.453	        0.082	0.316	0.608	  1	  0.01
+green   	0.471        	0.077	0.339	0.626  	1	  0.01
+check   	0.47        	0.067	0.31	0.591	  1	  0.01
+orange  	0.475       	0.072	0.309	0.606	  1	  0.01
+
+```{r tod effect}
+#checking for effect of time of day
+exp1 %>% add_tod -> exp1_tod
+
+model <- lmer(difference ~ updatedsex + day + tod + (1 | fishID), data = exp1_tod)
+
+summary(model)
+
+exp2 %>% add_tod -> exp2_tod
+
+model <- lmer(difference ~ sex + day + tod + (1 | fishID), data = exp2_tod)
+
+summary(model)
+```
+
+```{r, Filtering GB Condition}
+##unneeded due to above function
+#e1_cs %>% filter(exp == "GREBLU") -> e1gb
+#e2_cs %>% filter(exp == "GREBLU") -> e2gb
+#e1_cs_reduced %>% filter(exp == "GREBLU") -> e1gb_reduced
+#e2_cs_reduced %>% filter(exp == "GREBLU") -> e2gb_reduced
+```
+
+```{r forest plots in different conditions, eval=FALSE}
+#rpt forest plots from extraced and imported file
+forest_con <- ggplot(data = rpt_con, aes(x=conditions, y=R)) +
+  geom_errorbar(aes(ymin=lowCI, ymax=highCI), width = 0.05, position = position_dodge(0.3)) +
+  geom_point(aes(x = conditions, y = R), position = position_dodge(0.3))+
+  geom_hline(yintercept = 0, lty = "dotted") +
+  labs(x = "condition", y = "repeatability", title = "Repeatabiltiy of Aversive Learning Across Conditions") +
+  coord_flip()
+
+forest_con
+
+head(rptcon)
+```
+
+```{r forest plots of colour preference,eval=FALSE}
+forest_pref <- ggplot(data = rpt_pref, aes(x=conditions, y=R)) +
+  geom_errorbar(aes(ymin=lowCI, ymax=highCI), width = 0.05, position = position_dodge(0.3)) +
+  geom_point(aes(x = conditions, y = R), position = position_dodge(0.3))+
+  geom_hline(yintercept = 0, lty = "dotted") +
+  labs(x = "colour", y = "repeatability", title = "Repeatabiltiy of Colour Preference") +
+  coord_flip()
+
+forest_pref
+```
+
+```{r}
+#ggplot(RYYR, aes(exp, time_min, color=marking)) + 
+  #geom_quasirandom(dodge.width=0.4, alpha=0.7) +
+  #facet_wrap(.~type)
+```
+
+```{r}
+#rpt_gb <- rpt(difference ~ day + fish_size + (1 | fishID), grname = "fishID", data = allgb, datatype = "Gaussian", nboot = 100, npermut = 100)
+#rpt_gb
+```
+
+```{r}
+forest_rpt_outputs <- ggplot(data = rpt_outputs, aes(x = conditions, y = R)) +
+  geom_errorbar(aes(ymin = lowCI, ymax = highCI), width = 0.05, position = position_dodge(0.3)) +
+  geom_point(aes(x = conditions, y = R), position = position_dodge(0.3))+
+  geom_hline(yintercept = 0, lty = "dotted") +
+  labs(x = "condition", y = "repeatability", title = "Repeatabiltiy of Aversive Learning Across Conditions") +
+  coord_flip()
+
+forest_rpt_outputs
+
+forest_pref_outputs <- ggplot(data = pref_outputs, aes(x = conditions, y = R)) +
+  geom_errorbar(aes(ymin = lowCI, ymax = highCI), width = 0.05, position = position_dodge(0.3)) +
+  geom_point(aes(x = conditions, y = R), position = position_dodge(0.3))+
+  geom_hline(yintercept = 0, lty = "dotted") +
+  labs(x = "condition", y = "repeatability", title = "Repeatabiltiy of Aversive Learning Across Conditions") +
+  coord_flip()
+
+forest_pref_outputs
+```
+
+```{r}
+m1 <- lm(difference ~ sex + tank + exp, data = e1)
+summary(m1)
+```
+
+```{r Bootstrap Rpt}
+plot(rpt_e1, grname = names(rpt_e1$ngroups), scale = c("link",
+"original"), type = c("boot", "permut"), main = NULL,
+breaks = "FD", xlab = NULL)
+
+print(rpt_e1)
+```
+
+```{r}
+#geom_hline(aes(yintercept = yintercept, linetype = Lines), line.data)
+
+#geom_hline(aes(yintercept= 10, linetype = "NRW limit"), colour = 'red') +
+    #geom_hline(aes(yintercept= 75.5, linetype = "Geochemical atlas limit"), colour= 'blue') +
+   # scale_linetype_manual(name = "limit", values = c(2, 2), 
+                      #guide = guide_legend(override.aes = list(color = c("blue", "red"))))
+  
+  #theme(legend.position = "none")
+```
+
+```{r}
+e1 %>% 
+  ggplot(aes(sex, difference, col = sex)) + 
+  geom_hline(yintercept = 0, linetype = "dashed", colour = "grey40", size = 0.5) +
+  geom_hline(yintercept = 2.695262, colour = "coral1", size = 1.5) +
+  geom_hline(yintercept = 5.063168, colour = "cyan1", size = 1.5) +
+  geom_quasirandom(dodge.width = 0.6, alpha = 0.5) + 
+  theme(
+    legend.position = c(.95, .95),
+    legend.justification = c("right", "top"),
+    legend.box.just = "right",
+    legend.margin = margin(6, 6, 6, 6)
+    ) +
+  labs(col = "Sex") +
+  theme(legend.key = element_rect(fill = "white", colour = "grey90"))
+```
+
+```{r}
+#scale_colour_gradient(values = c((low = "3132B43", high = "#999999"), (low = "#132B43", high = "#009E73"), (low = "132B43", high = "#E69F00"), (low = "#132B43", high = "#D55E00"))) +
+
+#scale_x_discrete(name = "stim", breaks = c("Check", "Green", "Red", "Orange"),labels = c("Check\nGrey", "Green\nBlue", "Red\nYellow", "Orange\nMagenta")) +
+
+#?scale_colour_identity
+```
+
+```{r}
+##this section was made in an attempt to get a legend for the bottom observations only
+#rpt_outputs %>% filter(conditions %in% c("all_con", "single_gb", "single_bg")) -> rpt_outputs_top
+#rpt_outputs %>% filter(conditions %in% c("first_both_single", "second_both_single", "third_both_single","all_both_single")) -> rpt_outputs_bot
+```
+
+```{r}
+figure <- plot_grid(fig1A, fig1B, fig1C,
+                    labels = c('A','B','C'),
+                    label_x = 0.2,
+                    ncol = 1)
+
+figure
+```
+
+###Model Selection
+```{r learning}
+##mAll Subjects Selection
+library(leaps)
+fit.diff <- regsubsets(difference ~ sex + fish_size + exp + day,
+                              data = e1, nbest = 2)
+summary(fit.diff)
+
+plot(fit.diff)
+```
+
+```{r}
+##Information Criteria
+ft.diff1 <- lm(difference ~ sex, dat = e1)
+ft.diff2 <- lm(difference ~ sex + fish_size, dat = e1) 
+ft.diff3 <- lm(difference ~ sex + fish_size + exp, dat = e1)
+ft.diff4 <- lm(difference ~ sex + fish_size + exp + day, dat = e1)
+
+
+c( BIC(ft.diff1), BIC(ft.diff2), BIC(ft.diff3), BIC(ft.diff4) )
+
+c( AIC(ft.diff1), AIC(ft.diff2), AIC(ft.diff3), AIC(ft.diff4) )
+```
+
+```{r}
+##Stepwise
+library(MASS)
+
+fit.int = lm(difference ~ 1, dat = e1)
+
+forward.fit <- stepAIC(fit.int, direction="forward", scope = ~sex + fish_size + exp + day, k = log(nrow(e1)))
+
+forward.fit$anova 
+```
+
+```{r}
+add_day <- function(x) { #adding day column
+x %>% mutate(day = case_when (grepl("2019-06-24", date) ~ "1",
+                              grepl("0024-06-19", date) ~ "1",
+                    grepl("2019-06-25", date) ~ "2",
+                    grepl("2019-06-26", date) ~ "3",
+                    grepl("2019-06-27", date) ~ "4",
+                    grepl("2019-07-01", date) ~ "5",
+                    grepl("2019-07-02", date) ~ "6",
+                    grepl("2019-07-03", date) ~ "7",
+                    grepl("2019-07-04", date) ~ "8",
+                    grepl("2019-07-08", date) ~ "9",
+                    grepl("2019-07-09", date) ~ "10",
+                    grepl("2019-07-10", date) ~ "11",
+                    grepl("2019-07-11", date) ~ "12",
+                    grepl("2019-07-15", date) ~ "13",
+                    grepl("2019-07-16", date) ~ "14",
+                    grepl("2019-07-17", date) ~ "15",
+                    grepl("2019-07-18", date) ~ "16"))
+}
+
+add_day2 <- function(x) { #adding day column for experiment 2
+x %>% mutate(day = case_when (grepl("D1", filepath) ~ "19",
+                    grepl("D2", filepath) ~ "20",
+                    grepl("D3", filepath) ~ "21",
+                    grepl("D4", filepath) ~ "22",
+                    grepl("D5", filepath) ~ "23",
+                    grepl("D6", filepath) ~ "24",
+                    grepl("D7", filepath) ~ "25",
+                    grepl("D8", filepath) ~ "26"))
+}  
+```
+
+```{r}
+rpt_day_sex_size_exp <- function(x, y = "") {
+  
+x <- rpt(difference ~ day + + scale(fish_size) + (1 | exp) + (1 | fishID), grname = "fishID", data = x, datatype = "Gaussian", nboot = 100, npermut = 100)
+
+assign(y, x, envir = .GlobalEnv) #assigns output to global environment from within function
+
+x
+}
+```
+
+```{r}
+rpt_day_size <- function(x, y = "") {
+  
+x <- rpt(difference ~ day + fish_size + (1 | fishID), grname = "fishID", data = x, datatype = "Gaussian", nboot = 100, npermut = 100)
+
+assign(y, x, envir = .GlobalEnv) #assigns output to global environment from within function
+
+x
+}
+
+rpt_day_sex_size <- function(x, y = "") {
+  
+x <- rpt(difference ~ day + fish_size + sex + (1 | fishID), grname = "fishID", data = x, datatype = "Gaussian", nboot = 100, npermut = 100)
+
+assign(y, x, envir = .GlobalEnv) #assigns output to global environment from within function
+
+x
+}
+```
+
+#Old Figure 2
+```{r}
+##forest plot showing r estimate and 95% CI, conditions grouped according to CS+
+cols <- c("Across" = "#708090","Green_Blue" = "#009E73", "Blue_Green" = "#56B4E9", "All" = "#008B8B", "Third" = "#20B2AA", "Second" = "#00CED1", "First" = "#AFEEEE")
+
+forest_rpt_outputs <- ggplot(data = rpt_outputs, aes(x = conditions, y = R, colour = conditions)) +
+  geom_errorbar(aes(ymin = lowCI, ymax = highCI), width = 0.3, position = position_dodge(0.3), size = 1.1) +
+  geom_point(aes(x = conditions, y = R), position = position_dodge(0.3), size = 2.9) +
+  geom_hline(yintercept = 0, lty = "dotted") +
+  labs(x = "Condition", y = "Repeatability (R)", title = "Repeatabiltiy of Aversive Learning in Different Conditions") +
+  facet_col(vars(CS), scales = "free_y", space = "free") + #facet_col produces a better forest plot than facet_wrap
+  #scale_colour_manual(values = wes_palette("Darjeeling1")) +
+  scale_colour_manual(values = cols, limits = c("First", "Second", "Third","All")) +
+  ylim(0, 0.3) +
+  guides(col = guide_legend("Measurement")) +
+  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank(), legend.position = c(0.90, 0.2), plot.title = element_text(hjust = 0.5)) +
+  coord_flip()
+
+forest_rpt_outputs
+
+# Save an object as a file, ready to import into other rmd document
+saveRDS(rpt_outputs, file = "rpt_outputs.rds")
+```
+```{r}
+##forest plot showing r estimate and 95% CI, conditions grouped according to CS+
+cols <- c("Across" = "#708090","Green_Blue" = "#009E73", "Blue_Green" = "#56B4E9", "All" = "#008B8B", "Third" = "#20B2AA", "Second" = "#00CED1", "First" = "#AFEEEE")
+
+test_figure <- ggplot(data = rpt_outputs, aes(x = conditions, y = R, colour = conditions)) +
+  geom_errorbar(aes(ymin = lowCI, ymax = highCI), width = 0.3, position = position_dodge(0.3), size = 1.1) +
+  geom_point(aes(x = conditions, y = R), position = position_dodge(0.3), size = 2.9) +
+  geom_hline(yintercept = 0, lty = "dotted") +
+  labs(x = "Condition", y = "Repeatability (R)", title = "Repeatabiltiy of Aversive Learning in Different Conditions") +
+  facet_col(vars(CS), scales = "free_y", space = "free") + #facet_col produces a better forest plot than facet_wrap
+  #scale_colour_manual(values = wes_palette("Darjeeling1")) +
+  scale_colour_manual(values = cols, limits = c("First", "Second", "Third","All")) +
+  ylim(0, 0.3) +
+  guides(col = guide_legend("Measurement")) +
+  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank(), legend.position = c(0.90, 0.2), plot.title = element_text(hjust = 0.5)) +
+  coord_flip()
+
+test_figure
+
+```
+
+
+```{r}
+group(a = "REDCS", b = "REDNON", c = 1, d = e1_new) -> group_1_new #DF of red and yellow
+
+group(a = "GRECS", b = "GRENON", c = 2, d = e1_new) -> group_2_new #DF of green and blue
+
+group(a = "CHKCS", b = "CHKNON", c = 3, d = e1_new) -> group_3_new #DF of check and grey
+
+group(a = "ORACS", b = "ORANON", c = 4, d = e1_new) -> group_4_new #DF of orange and magenta
+```
+

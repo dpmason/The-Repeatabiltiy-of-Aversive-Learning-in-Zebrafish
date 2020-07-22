@@ -1,0 +1,93 @@
+---
+title: "pilot"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+pacman::p_load(tidyverse)
+
+source("./Scripts/functions.R")
+```
+
+```{r}
+add_diff <- function(x) { #spreads data and adds the response variable 'difference'
+  
+  x[,7] = NULL
+  
+  x %>% spread(type, time) %>% mutate(difference = (BASELINE - PROBE))
+}
+
+add_day <- function(x) { #adding day column for experiment 2
+x %>% mutate(day = case_when (grepl("day1", filepath) ~ "1",
+                    grepl("day2", filepath) ~ "2",
+                    grepl("day3", filepath) ~ "3"))
+}
+```
+
+```{r}
+path <- paste0("./volttest/day", 1:2, "/") #creates a section of the raw data filepaths
+
+all_path <- map(path,  ~list.files(path = .)[str_detect(list.files(path = .), ".csv")] ) %>% map2(.,path,~ paste0(.y, .x)) 
+
+volt_2 <- map(unlist(all_path), import_csv) %>% #uses import_csv function from the source script functions.R to modify the raw data into R suitable structure
+  bind_rows() %>% as_tibble() %>% #makes the data frame a tibble
+  group_by(filepath, date, marking, type, test, unit, variable, arena) %>% #groups columns for summarising
+  summarise(total = sum(number)) %>% #summarises time spent
+  filter(variable == "ZONE_TIMERS") %>% #filters the necessary measurement "ZONE TIMERS"
+  group_by(type, marking, test, unit, filepath, date) %>%
+  summarise(sum_time = sum(total), arena = unique(arena)) %>% 
+  arrange(filepath, marking, type, test) %>% #arranges variables in desireable order
+  mutate(time_min = if_else(type == "BASELINE", sum_time/5, sum_time/1)) %>% #standardises BASELINE and PROBE to per minute
+  add_day
+
+head(volt_2)
+
+path <- paste0("./volttest/day", 3, "/") #creates a section of the raw data filepaths
+
+all_path <- map(path,  ~list.files(path = .)[str_detect(list.files(path = .), ".csv")] ) %>% map2(.,path,~ paste0(.y, .x)) 
+
+volt_5 <- map(unlist(all_path), import_csv) %>% #uses import_csv function from the source script functions.R to modify the raw data into R suitable structure
+  bind_rows() %>% as_tibble() %>% #makes the data frame a tibble
+  group_by(filepath, date, marking, type, test, unit, variable, arena) %>% #groups columns for summarising
+  summarise(total = sum(number)) %>% #summarises time spent
+  filter(variable == "ZONE_TIMERS") %>% #filters the necessary measurement "ZONE TIMERS"
+  group_by(type, marking, test, unit, filepath, date) %>%
+  summarise(sum_time = sum(total), arena = unique(arena)) %>% 
+  arrange(filepath, marking, type, test) %>% #arranges variables in desirable order
+  mutate(time_min = if_else(type == "BASELINE", sum_time/5, sum_time/3)) %>% #standardises BASELINE and PROBE to per minute
+  add_day
+
+head(volt_5)
+```
+
+```{r}
+volt_2 %>%
+  group_by(marking, filepath, day, type, test) %>%
+  summarise(time = mean(time_min), arena = unique(arena)) %>%
+  add_diff -> dat_2
+
+volt_5 %>%
+    group_by(marking, filepath, day, type, test) %>% 
+  summarise(time = mean(time_min), arena = unique(arena)) %>%
+  add_diff -> dat_5
+
+full_join(dat_2, dat_5) %>%  mutate(voltage = case_when(grepl("BG5", filepath) ~ "5",
+                             grepl("BG7", filepath) ~ "7",
+                             grepl("BG9", filepath) ~ "9")) -> volt_data
+```
+
+```{r}
+volt_data %>% filter(test == "CHECK") %>% group_by(test, voltage) %>% summarise(mean = mean(difference), sd = sd(difference), se = sd(difference)/sqrt(n())) -> volt_sum
+
+plot1 <- ggplot(volt_sum, aes(voltage, mean)) +
+  geom_bar(position=position_dodge(), stat= "identity", width = 0.7, colour="black") +
+  geom_errorbar(aes(ymin=mean - se, ymax = mean + se), width = 0.4, colour = "black", position=position_dodge(0.9)) +
+  xlab("Unconditioned Stimulus Voltage") +
+  ylab("Association Response (seconds per minute) ± SD") +
+  ylim(0,15)
+
+plot1
+```
+

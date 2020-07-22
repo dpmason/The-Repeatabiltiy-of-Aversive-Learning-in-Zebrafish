@@ -1,0 +1,174 @@
+---
+title: "Repeatabiltiy of Aversive Learning in Zebrafish - Results"
+author: "Dominic Mason"
+date: "19/2/20"
+output: 
+html_document: default
+pdf_document: default
+fig_caption: yes
+---
+
+<style>
+p.caption {
+  font-size: 0.8em;
+}
+</style>
+
+```{r setup, include = F, message = F, warning = F}
+knitr::opts_chunk$set(echo = TRUE)
+
+pacman::p_load(readxl, tidyr, dplyr, magrittr, lubridate, stringr, purrr)
+
+library(plyr)
+library(emmeans)
+library(lmerTest) 
+library(ggThemeAssist)
+library(rptR) #repeatability 
+library(lme4) #LMM 
+library(ggplot2) #grammar of graphics (visualisation)
+library(lubridate) #time and date
+library(wesanderson) #colour palettes
+library(ggbeeswarm) #beeswarm plots
+library(ggforce) #extra capabilities for ggplot (eg.facet_col)
+
+e1 <- readRDS(file = "e1.rds")
+e2 <- readRDS(file = "e2.rds")
+rpt_outputs_all <- readRDS(file = "rpt_outputs_all.rds")
+pref_outputs <- readRDS(file = "pref_outputs.rds")
+```
+
+# Research Questions 
+**1. Is aversive learning repeatable?**
+
+### Nested Questions
+ *1. Is aversive learning repeatable across conditions?*
+ *2. Is aversive learning repeatable in a given condition?*
+
+# Hypotheses
+A meta analysis by Cauchoix et al. 2006 estimated repeatability of appetitive learning to be moderate. Since aversive learning has immediate survival consequences, we hypothesise that aversive learning is heading towards fixation, thus being less repeatable. In a given condition, repeatablitiy should be inflated due to what some people term 'pseduo-repeatability' (Niemela 2019).
+
+### Notes
+All fixed effects were balanced in experimental design.
+
+## Data Exploration
+```{r, echo = F}
+cdat <- ddply(e1, "exp", summarise, rating.mean=mean(difference))
+cdat[-9,] -> cdat
+
+ggplot(data = e1, mapping = aes(x = difference, fill = exp )) + 
+  geom_density(alpha = .3) +
+  labs(title = "Repeatability of Aversive Learning Across Conditions") +
+  geom_vline(data = cdat, aes(xintercept = rating.mean,  colour = exp), linetype="dashed", size = 1)
+
+ggplot(data = e1, mapping = aes(x = difference, fill = exp )) + 
+  geom_density(alpha=.3)+
+ facet_grid(~sex)
+
+ggplot(data = e1, mapping = aes(x = exp, y = difference, fill = exp)) + 
+    geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  facet_grid(~sex)
+
+ggplot(data = e1, mapping = aes(x = difference, fill = exp )) + 
+  geom_histogram()+
+  facet_grid(~sex)
+
+e1 %>% 
+  ggplot(aes(x = exp, y = difference, colour = exp)) +
+  geom_violin(alpha = 0.1, draw_quantiles = c(0.25, 0.5, 0.75)) + 
+  geom_jitter(width = 0.2, height = 0, alpha = 0.2) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  facet_grid(~sex)
+
+e1 %>% 
+  ggplot(aes(x = sex, y = difference, colour = sex)) +
+  geom_violin(alpha = 0.1, draw_quantiles = c(0.25, 0.5, 0.75)) + 
+  geom_jitter(width = 0.2, height = 0, alpha = 0.2) +
+  theme_minimal()
+```
+
+### Histograms of interest varaible for both experiments
+
+We can assume normality of the learning reponse 'difference'
+```{r, echo = F}
+hist(e1$difference)
+
+hist(e2$difference)
+```
+# Mixed Models
+
+I included a standardised format of all 30 minutes of the baseline data and first 2 minutes of the probe in our analysis. Contrasts indicate if there are differences between certain conditons. 
+
+### Notes
+
+1. Time of day were not significantly different, while conditions varied in learning efficacy.
+2. A Log transformed model is included, however the residuals and qqplot indicate that this isn't necessary.
+
+```{r, echo = F}
+model <- lmer(difference ~ exp + tod + (1 | fishID), data = e1)
+plot(model)
+qqnorm(resid(model))
+summary(model)
+```
+
+### Repeatability Estimates and 95% Confidence Intervals
+
+We tested a total of 104 fish in varying colour combinations (original n = 96). Overall, fish learned to avoid the negatively associated stimulus during the probe period (Exp1 4.19; Exp2 6.42; seconds per minute avoidance of CS+ over CS-). Males were slightly better learners than females (2.43 seconds; P = 0.013). As a consequence, we conducted subsequent analyses with separated sexes. Further, zebrafish are sexually dimorphic with larger females. Thus, shock penetrance may lessen by size and explain the learning disparity. We integrated size as a fixed factor in the mixed models to control for potential size effect. Note that the positively male skewed results remained with size included in the LMMs. We ran a series of LMMs to determine reverse learning. The experiment 1 model indicated a slight effect that was not statistically significant. We found a very slight and non-statistically significant indication of smarter males in experiment 2. 
+
+```{r, echo = F, fig.cap = "Figure 1. Estimates of repeatability in aversive learning (R in varying experimental conditions). We display overall, male and female repeatability’s determined from generalised linear mixed models.  R estimate and 95% confidence intervals with 10,000 bootstraps. Sample size ranged from 96 to 103. Males in blue, females in red and combined in grey."}
+forest_rpt_outputs_all <- ggplot(data = rpt_outputs_all, aes(x = conditions, y = R, colour = sex)) +
+  geom_errorbar(aes(ymin = lowCI, ymax = highCI), width = 0.05, position = position_dodge(0.3)) +
+  geom_point(aes(x = conditions, y = R), position = position_dodge(0.3))+
+  geom_hline(yintercept = 0, lty = "dotted") +
+  labs(x = "Condition", y = "Repeatability", title = "Repeatabiltiy of Aversive Learning in Various Conditions") +
+  facet_col(vars(CS), scales = "free_y", space = "free") + #facet_col produces a better forest plot than facet_wrap
+  scale_colour_manual(values = wes_palette("Darjeeling1")) +
+  coord_flip()
+
+forest_rpt_outputs_all
+```
+
+We found either low or no repeatability in all contexts across both experiments. The R value and 95% confidence intervals (CIs) of all contexts are depicted in Figure 1. Under the guidance of Bell 2009 and Wolak 2012, we categorise repeatability into low repeatability (<0.2), moderate (>0.2 <0.4) and high (>0.4). Excluding sex separated data, significant repeatability was found in only two conditions. In the first experiment, we measured the repeatability of aversive learning across all 8 conditions. Repeatability was low (R = 0.068) and the CI excluded zero, see figure 1. To evaluate repeatability in a single condition, we obtained an additional two measurements in both the ‘blue’ and ‘green’ conditions. In figure 1 under single condition analyses, ‘blue’ was the only statistically significant result (R = 0.152) and had a CI excluding zero.
+
+```{r, echo = F, fig.cap = "Figure 2. Baseline colour preference estimates of repeatability (R) in varying colours. 95% confidence intervals are shown from rptR linear mixed models."}
+forest_pref_outputs_all <- ggplot(data = pref_outputs, aes(x = conditions, y = R, colour = conditions)) +
+  geom_errorbar(aes(ymin = lowCI, ymax = highCI), width = 0.05, position = position_dodge(0.3)) +
+  geom_point(aes(x = conditions, y = R), position = position_dodge(0.3))+
+  geom_hline(yintercept = 0, lty = "dotted") +
+  labs(x = "Condition", y = "Repeatability", title = "Repeatabiltiy of Colour Preference") +
+  scale_color_manual(values = c("#999999", "#009E73", "#E69F00", "#D55E00")) +
+  theme(legend.position = "none") +
+  coord_flip()
+
+forest_pref_outputs_all
+```
+
+The previous findings that aversive learning is present but generally not repeatable led us to query if basic colour preference was repeatable. In experiment 1, all colour preference repeatability’s were high with CIs excluding zero. Colour preference of Red, Green, Check and Orange (R = 0.453, R = 0.471, R = 0.470, R = 0.475, respectively; Figure 2). In experiment 2, green colour preference was slightly inflated compared to experiment 1 but a similar high result (R = 0.542; Figure 2).
+
+### Contrasts - overall model
+```{r, echo = F}
+em_exp <- emmeans(model, ~ exp) 
+pairs(em_exp)
+
+em_tod <-  emmeans(model, ~ tod)
+pairs(em_tod)
+```
+### Interpretation
+BLUGRE is giving the strongest learning reponse. 
+
+All data has been double checked to ensure integrity.
+
+### Log10 transformed model
+```{r, echo = FALSE, warning = FALSE}
+#Log transformed model (however the checks above indicate that this isn't necessary ?)
+model2 <- lmer(log10(difference) ~ exp + tod + (1 | fishID), data = e1)
+plot(model2)
+qqnorm(resid(model2))
+summary(model2)
+```
+
+```{r}
+
+```
+

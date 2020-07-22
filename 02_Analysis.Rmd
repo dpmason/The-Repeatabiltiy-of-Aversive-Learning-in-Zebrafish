@@ -1,0 +1,443 @@
+---
+title: "Analysis"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+#install.packages("pacman")
+library(pacman)
+
+pacman::p_load(tidyverse, ggbeeswarm, rptR, lme4, magrittr)
+```
+
+#Learning
+##Learning Exp1
+```{r}
+##basic model
+learn_model_e1 <- lmer(difference ~ scale(day) + sex + scale(fish_size) + learning + (1 | exp) + (1 | fishID), data = e1) #z-scaling, if you scale fish size you have to scale day as well
+
+summary(learn_model_e1)
+```
+
+##Learning Exp2
+```{r}
+learn_model_e2 <- lmer(difference ~ scale(day) + sex + scale(fish_size) + exp + (1 | fishID), data = e2)
+
+summary(learn_model_e2)
+```
+
+##Check Assumptions
+```{r}
+plot_model(learn_model_e1, type='diag') #all assumptions
+
+qqnorm(residuals(learn_model_e1)) #linearity of residuals
+
+scatter.smooth(residuals(learn_model_e1)~fitted(learn_model_e1)) #constant variance
+```
+
+#Repeatability
+##Across Conditions Repeatabilties
+```{r Exp 1 Analysis}
+#repeatability outputs for across 8 conditions
+  
+#repetability model function for mixed sexes
+rpt_sex <- function(x, y = "") {
+  
+x <- rpt(difference ~ sex + (1 | fishID), grname = "fishID", data = x, datatype = "Gaussian", nboot = 100, npermut = 100, adjusted = FALSE) #estimate of enhanced agree repeatability, differing from adjusted since the fixed effects variance is included in the denominator
+
+assign(y, x, envir = .GlobalEnv) #assigns output to global environment from within function
+
+x
+}
+
+rpt_nosex <- function(x, y = "") {
+  
+x <- rpt(difference ~ 1 + (1 | fishID), grname = "fishID", data = x, datatype = "Gaussian", nboot = 100, npermut = 100, adjusted = FALSE)
+
+assign(y, x, envir = .GlobalEnv) #assigns output to global environment from within function
+
+x
+}
+
+rpt_sex(e1_reduced, y = "rpt_e1_reduced") #limited baseline period
+
+rpt_nosex(e1_male, y = "rpt_e1_male") #males only
+
+rpt_nosex(e1_female, y = "rpt_e1_female") #females only
+```
+
+###R Across Con
+```{r}
+rpt_sex(e1, y = "rpt_e1") #across conditions rpt model
+```
+
+#First half Exp1 Repeatability
+```{r, Repeatabiltiy before reverse learning}
+e1 %>% filter(day %in% c(1,3,8,10)) -> e1_firsthalf
+
+e1_firsthalf
+
+rpt_sex(e1_firsthalf, y = "rpt_e1_firsthalf") #across conditions rpt model
+```
+
+##Single Condiion Repeatabilties
+```{r repeatabilities in single condition}
+#rpt output of all green and also exp2 green
+
+#Reduced baseline
+rpt_sex(allgb_reduced, y = "rpt_allgb_reduced")
+
+#Green/Blue Exp 2
+rpt_sex(e2gb, y = "rpt_e2gb")
+
+#Green/Blue Exp 2 reduced baseline
+rpt_sex(e2gb_reduced, y = "rpt_e2gb_reduced") 
+
+#Green/Blue sexes separated 
+rpt_nosex(allgb_male, y = "rpt_allgb_male")
+rpt_nosex(allgb_female, y = "rpt_allgb_female")
+
+#Blue/Green Exp 2
+rpt_nosex(e2bg, y = "rpt_e2bg")
+
+#Blue/Green sexes separated
+rpt_nosex(allbg_male, y = "rpt_allbg_male")
+rpt_nosex(allbg_female, y = "rpt_allbg_female")
+
+summary(allbg_male)
+count(e1_male, fishID)
+count(e1_female, fishID)
+```
+
+###R Green/Blue
+```{r}
+rpt_sex(allgb, y = "rpt_allgb") #all GREBLU
+```
+
+###R Blue/Green
+```{r}
+rpt_sex(allbg, y = "rpt_allbg") #all BLUGRE
+```
+
+##Rpt Measurement Sets 
+```{r Repeatabilties of Single Conditions Measurement Sets}
+#analysis of grouped measurements, first, second, third, all
+rpt_set_sex <- function(x, y = "") {
+  
+x <- rpt(difference ~ set + sex + (1 | fishID), grname = "fishID", data = x, datatype = "Gaussian", nboot = 100, npermut = 0)
+
+assign(y, x, envir = .GlobalEnv) #assigns output to global environment from within function
+
+x
+}
+
+rpt_set <- function(x, y = "") {
+  
+x <- rpt(difference ~ set + (1 | fishID), grname = "fishID", data = x, datatype = "Gaussian", nboot = 100, npermut = 0)
+
+assign(y, x, envir = .GlobalEnv) #assigns output to global environment from within function
+
+x
+}
+
+##rpt of Green/Blue & Blue/Green first measurement set
+rpt_set_sex(first, y = "rpt_first")
+rpt_set(first_male, y = "rpt_first_male") #males only
+rpt_set(first_female, y = "rpt_first_female") #females only
+
+##rpt of Green/Blue & Blue/Green second measurement set
+rpt_set_sex(second, y = "rpt_second")
+rpt_set(second_male, y = "rpt_second_male")
+rpt_set(second_female, y = "rpt_second_female")
+
+##rpt of Green/Blue & Blue/Green second measurement set
+rpt_set_sex(third, y = "rpt_third")
+rpt_set(third_male, y = "rpt_third_male")
+rpt_set(third_female, y = "rpt_third_female")
+
+##rpt of Green/Blue & Blue/Green all three measurement sets
+rpt_set_sex(allgbbg, y = "rpt_allgbbg")
+rpt_set(allgbbg_male, y = "rpt_allgbbg_male")
+rpt_set(allgbbg_female, y = "rpt_allgbbg_female")
+
+##first and second measurements of GREBLU and BLUGRE
+rpt_set_sex(first_second_g, y = "rpt_fsg")
+rpt_set_sex(first_second_b, y = "rpt_fsb")
+
+##first and third measurements of GREBLU and BLUGR
+rpt_set_sex(first_third_g, y = "rpt_ftg")
+rpt_set_sex(first_third_b, y = "rpt_ftb")
+
+##second and third measurements of GREBLU and BLUGRE
+rpt_set_sex(second_third_g, y = "rpt_stg")
+rpt_set_sex(second_third_b, y = "rpt_stb")
+```
+
+##Size Removed Rpt
+```{r Repeatability models with size removed from DFs}
+##running rpt models with size as a factor removed
+
+rpt_sex(allgb_no_size, y = "rpt_e1_no_size")
+rpt_sex(allgb_no_size, y = "rpt_gb_no_size")
+rpt_sex(e2gb_no_size, y = "rpt_e2gb_no_size")
+rpt_sex(allbg_no_size, y = "rpt_bg_no_size")
+rpt_sex(e2bg_no_size, y = "rpt_e2bg_no_size")
+rpt_sex(first_no_size, y = "rpt_first_no_size")
+rpt_sex(second_no_size, y = "rpt_second_no_size")
+rpt_sex(third_no_size, y = "rpt_third_no_size")
+```
+
+
+#Colour Preference
+##Colour Preference Exp1 Data Wrangling
+```{r Colour Preference}
+red <- "Red"
+gre <- "Green"
+gry <- "Grey"
+ora <- "Orange"
+
+group_1 %>% mutate(pref = BASELINE, stim = red) -> df_red_pref
+group_2 %>% mutate(pref = BASELINE, stim = gre) -> df_gre_pref
+group_3 %>% mutate(pref = BASELINE, stim = gry) -> df_gry_pref
+group_4 %>% mutate(pref = BASELINE, stim = ora) -> df_ora_pref
+
+full_join(df_red_pref, df_gre_pref) -> red_gre #first step to join all col pref DF's
+
+full_join(red_gre, df_gry_pref) -> red_gre_gry #second step
+
+full_join(red_gre_gry, df_ora_pref) -> col_pref #all col prefs together in  DF
+
+col_pref <- mutate_if(col_pref, is.character, as.factor) #changed chr to fctr
+```
+
+##LMMs Colour Preference
+```{r, colour preference models}
+col_pref_LMM <- function(df){
+  x <- lmer(BASELINE ~ scale(day) + sex + learning + (1 | fishID), data = df)
+}
+
+col_pref_LMM(group_1) -> pref_red_model
+
+col_pref_LMM(group_2) -> pref_gre_model
+
+col_pref_LMM(group_3) -> pref_chk_model
+
+col_pref_LMM(group_4) -> pref_ora_model
+```
+
+##Repeatability of Colour Preference
+```{r repeatbiltiy of colour preference}
+##rpt for colour preference
+rpt_pref <- function(x, y = "") { #function that creates df of time spent in one colour over the other in its condition
+  
+x <- rpt(BASELINE ~ 1 + (1 | fishID), grname = "fishID", data = x, datatype = "Gaussian", nboot = 100, npermut = 100)
+
+assign(y, x, envir = .GlobalEnv) #assigns output to global environment from within function
+
+x
+}
+
+rpt_pref(group_1, y = "red_pref") #preference for red colour
+rpt_pref(group_2, y = "green_pref") #preference for green colour
+rpt_pref(group_3, y = "grey_pref") #preference for check colour
+rpt_pref(group_4, y = "orange_pref") #preference for orange colour
+ 
+rpt_pref(group_1_male, y = "red_pref_male")
+rpt_pref(group_1_female, y = "red_pref_female")
+
+rpt_pref(group_2_male, y = "green_pref_male")
+rpt_pref(group_2_female, y = "green_pref_female")
+
+rpt_pref(group_3_male, y = "check_pref_male")
+rpt_pref(group_3_female, y = "check_pref_female")
+
+rpt_pref(group_4_male, y = "orange_pref_male")
+rpt_pref(group_4_female, y = "orange_pref_female")
+
+#rpt col pref exp2
+rpt_pref(group_exp2, y = "exp2_pref")
+```
+
+#Reverse Learning
+##Reverse Learning Exp1
+```{r reverse learning models}
+##models to determine reverse learning in experiment 1
+reverse_model_e1 <- lmer(difference ~ learning + scale(day) + relevel(sex, ref = "male") + scale(fish_size) + (1 | exp) + (1 | fishID), data = e1)
+summary(reverse_model_e1)
+
+reverse_e1 <- lmer(difference ~ learning + day + relevel(sex, ref = "male") + scale(fish_size) + (1 | exp) + (1 | fishID), data = e1)
+summary(reverse_e1)
+
+reverse_e1_reduced <- lmer(difference ~ learning + I(day-8) + relevel(sex, ref = "male") + scale(fish_size) + (1 | exp) + (1 | fishID), data = e1_reduced)
+summary(reverse_e1_reduced)
+
+reverse_e1_reduced <- lmer(difference ~ learning + day + sex + scale(fish_size) + (1 | exp) + (1 | fishID), data = e1_reduced)
+summary(reverse_e1_reduced)
+```
+## LMM Reverse Learning Exp1
+```{r}
+reverse_e1 <- lmer(difference ~ learning + scale(day) + sex + scale(fish_size) + (1 |exp) + (1 | fishID), data = e1)
+summary(reverse_e1)
+```
+
+##Reverse learning Exp2
+```{r reverse learning in exp2}
+e2 %>% filter(learning %in% c("second", "secondreverse")) -> e2_second
+
+reverse_e2_second <- lmer(difference ~ learning + scale(day) + sex + scale(fish_size) + (1 | exp) + (1 | fishID), data = e2_second)
+summary(reverse_e2_second)
+
+e2 %>% filter(learning %in% c("third", "thirdreverse")) -> e2_third
+
+reverse_e2_third <- lmer(difference ~ learning + day + sex + scale(fish_size) + exp + (1 | fishID), data = e2_third)
+summary(reverse_e2_third)
+
+hist(e2$difference)
+reverse_e2 <- lmer(difference ~ set + day + sex + fish_size + (1 | exp) + (1 | fishID), data = e2)
+summary(reverse_e2)
+
+reverse_e2_new <- lmer(difference ~ learning + day + sex + scale(fish_size) + (1 | exp) + (1 | fishID), data = e2)
+summary(reverse_e2_new)
+
+reverse_e2_reduced <- lmer(difference ~ set + day + (1 | fish_size) + (1 | exp) + (1 | fishID), data = e2_reduced)
+summary(reverse_e2_reduced)
+```
+
+#Organising Outputs
+01##Rpt Outputs
+```{r Formatting Repeatabiltiy Outputs} 
+#changes number of digits in output to 3
+options(digits = 3)
+
+##function for getting vector of results for rpt analysis
+rpt_output <- function(w){
+
+w -> x
+
+c(x[[4]][1], x[[5]][1], x[[6]][1:2], x[[7]][1:2]) -> y
+
+z <- data.frame(t(sapply(y,c)))
+}
+
+##outcomes as data frames
+rpt_output(rpt_e1) -> Across_Conditions
+
+rpt_output(rpt_allgb) -> Green_Blue
+rpt_output(rpt_allbg) -> Blue_Green
+
+rpt_output(rpt_first) -> First
+rpt_output(rpt_second) -> Second
+rpt_output(rpt_third) -> Third
+
+rpt_output(rpt_allgbbg) -> All
+
+rpt_output(red_pref) -> Red
+rpt_output(green_pref) -> Green
+rpt_output(grey_pref) -> Grey
+rpt_output(orange_pref) -> Orange
+
+rpt_outputs
+```
+
+##Renaming Rpt Outputs
+```{r}
+#function for renaming output variables
+rename_output_func <- function(x) {
+  
+   x %>% rename(R = fishID, lowCI = X2.5., highCI = X97.5.)
+}
+
+#function that changes first column named rownames to conditions
+rownames_col_to_con <- function(x) {
+
+x <- cbind(conditions = rownames(x), x)
+
+x
+}
+
+#funtion that binds outputs together
+rename_rm_col <- function(y, z) {
+
+rbind(y) -> x1
+
+rownames(x1) <- z
+
+x1 %>% rownames_col_to_con -> x2
+
+rename_output_func(x2) -> x
+}
+
+rename_rm_col(rbind(Across_Conditions, Green_Blue, Blue_Green, First, Second, Third, All), c("Across", "Green_Blue", "Blue_Green", "First", "Second", "Third", "All")) -> rpt_outputs
+
+rename_rm_col(rbind(Red, Green, Check, Orange), c("Red", "Green", "Grey", "Orange")) -> pref_outputs
+```
+
+##Rpt Outputs Sex
+```{r rpt outputs in sexes}
+## separated sexes
+rpt_output(rpt_e1_male) -> Across_Male
+rpt_output(rpt_e1_female) -> Across_Female
+
+# all green male and female
+rpt_output(rpt_allgb_male) -> GreenBlue_Male
+rpt_output(rpt_allgb_female) -> GreenBlue_Female
+
+# all bluemale and female
+rpt_output(rpt_allbg_male) -> BlueGreen_Male
+rpt_output(rpt_allbg_female) -> BlueGreen_Female
+
+#grouped measurements blue and green
+rpt_output(rpt_first_male) -> First_Male
+rpt_output(rpt_first_female) -> First_Female
+
+rpt_output(rpt_second_male) -> Second_Male
+rpt_output(rpt_second_female) -> Second_Female
+
+rpt_output(rpt_third_male) -> Third_Male
+rpt_output(rpt_third_female) -> Third_Female
+
+rpt_output(rpt_allgbbg_male) -> All_Male
+rpt_output(rpt_allgbbg_female) -> All_Female
+
+#colour preference male and female
+rpt_output(red_pref_male) -> red_pref_male_output
+rpt_output(red_pref_female) -> red_pref_female_output
+
+rpt_output(green_pref_male) -> green_pref_male_output
+rpt_output(green_pref_female) -> green_pref_female_output
+
+rpt_output(check_pref_male) -> check_pref_male_output
+rpt_output(check_pref_female) -> check_pref_female_output
+
+rpt_output(orange_pref_male) -> orange_pref_male_output
+rpt_output(orange_pref_female) -> orange_pref_female_output
+
+rename_rm_col(rbind(Across_Male, Across_Female, GreenBlue_Male, GreenBlue_Female, BlueGreen_Male, BlueGreen_Female, First_Male, First_Female, Second_Male, Second_Female, Third_Male, Third_Female, All_Male, All_Female), c("Across_Male", "Across_Female", "Green/Blue_Male", "Green/Blue_Female", "Blue/Green_Male", "Blue/Green_Female", "First_Male", "First_Female", "Second_Male", "Second_Female", "Third_Male", "Third_Female", "All_Male", "All_Female")) -> rpt_outputs_sex #df rpt outputs sex separated
+
+rename_rm_col(rbind(red_pref_male_output, red_pref_female_output, green_pref_male_output, green_pref_female_output, check_pref_male_output, check_pref_female_output, orange_pref_male_output, orange_pref_female_output), c("red_pref_male_output", "red_pref_female_output", "green_pref_male_output", "green_pref_female_output", "check_pref_male_output", "check_pref_female_output", "orange_pref_male_output", "orange_pref_female_output")) -> pref_outputs_sex #df pref rpt outputs sex separated
+
+
+full_join(rpt_outputs, rpt_outputs_sex) -> rpt_outputs_all #repeatability output with original and also sexes split
+```
+
+##Repeatabiltiy Tables
+```{r}
+write.table(rpt_outputs, file = "rpt_outputs_table.csv", sep = ",", row.names = FALSE) #exports table to project file
+
+write.table(rpt_outputs_sex, file = "rpt_outputs_sex_table.csv", sep = ",", row.names = FALSE)
+
+write.table(pref_outputs, file = "pref_outputs_table.csv", sep = ",", row.names = FALSE)
+
+write.table(pref_outputs_sex, file = "pref_outputs_sex_table.csv", sep = ",", row.names = FALSE)
+
+write.table(rpt_outputs_all, file = "rpt_outputs_all_table.csv", sep = ",", row.names = FALSE)
+```
+
+#Clear Environment
+```{r}
+#rm(list = ls(all.names = TRUE))
+```
+
+

@@ -1,0 +1,81 @@
+---
+title: "Modelling"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#LMs
+```{r}
+library(arm)
+attach(e1)
+model1 <- lm(difference ~ sex + fish_size)
+model2 <- lm(difference ~ sex + fish_size + sex:fish_size)
+display(model1)
+display(model2)
+```
+
+```{r}
+cfish_size <- scale(fish_size, scale = FALSE)
+model1c <- lm(difference ~ sex + fish_size)
+model2c <- lm(difference ~ sex + fish_size + sex:cfish_size)
+display(model1c)
+display(model2c)
+```
+#LMMs
+```{r}
+lm1 <- lm(difference ~ 1)
+lmm1 <- lmer(difference ~ 1 + (1 | fishID))
+display(lm1)
+#mean(diff) = 4.20 
+#var(diff) = 77.61
+display(lmm1)
+#mean(diff) = 4.19 
+#var(fishID) = 4.84 (between ind var)
+#var(resid) = 72.76 (within ind var)
+
+#R = 4.84/(4.84 + 72.76)
+
+4.84/(4.84 + 72.76) #low between ind variance led to low repeatabiltiy
+
+#R = 0.062
+```
+
+```{r}
+lm2 <- lm(difference ~ 1)
+lmm2 <- lmer(difference ~ sex + day + scale(fish_size) + (1 | fishID))
+display(lm2)
+#mean(diff) = 4.20 
+#var(diff) = 77.61
+display(lmm2)
+#mean(diff) = 3.18
+#var(fishID) = 3.92 (between ind var)
+#var(resid) = 71.74 (within ind var)
+
+#R = 3.18/(3.18 + 71.74)
+
+3.18/(3.18 + 72.76) #low between ind variance led to low repeatabiltiy
+
+#R = 0.042
+```
+```{r}
+lm3 <- lm(difference ~ 1)
+lmm3 <- lmer(difference ~ sex + (1 | fishID))
+display(lm3)
+#mean(diff) = 4.20 
+#var(diff) = 77.61
+display(lmm3)
+#mean(diff) = 2.69
+#var(fishID) = 3.64(between ind var)
+#var(resid) = 72.76 (within ind var)
+
+#R = 3.64/(3.64 + 72.76)
+
+3.64/(3.64 + 72.76) #low between ind variance led to low repeatabiltiy
+
+#R = 0.047
+```
+
+
