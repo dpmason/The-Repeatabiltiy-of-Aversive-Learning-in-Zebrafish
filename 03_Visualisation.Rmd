@@ -9,8 +9,9 @@ knitr::opts_chunk$set(echo = TRUE)
 #install.packages("pacman")
 library(pacman)
 
-pacman::p_load(tidyverse, ggbeeswarm, rptR, lme4, ggpubr, ggforce, magrittr, wesanderson)
+pacman::p_load(tidyverse, ggbeeswarm, rptR, lme4, ggpubr, ggforce, magrittr)
 
+###included colours are colourblind-friendly###
 ```
 
 #Main Visualisation
@@ -40,20 +41,22 @@ rpt_outputs %>% slice(1:3) -> new_outputs #remove measurement set data
 ```{r, Results Figure 2}
 pref_cols <- c("Grey" = "#999999","Green" = "#009E73", "Red" = "#D55E00", "Orange" = "#E69F00")
 
+sex_cols1 <- c("male" = "#56B4E9", "female" = "#CC79A7")
+
 fig2A <-  e1 %>% 
-  ggplot(aes(sex, difference, col = sex)) + 
+  ggplot(aes(sex, difference,  col = sex)) + 
   geom_hline(yintercept = 0, linetype = "dashed", colour = "grey40", size = 0.5) +
-  geom_hline(yintercept = 2.695262, colour = "coral1", size = 1.5) +
-  geom_hline(yintercept = 5.063168, colour = "cyan1", size = 1.5) +
+  geom_hline(yintercept = 2.695262, colour = "#56B4E9", size = 1.5) +
+  geom_hline(yintercept = 5.063168, colour = "#CC79A7", size = 1.5) +
   geom_quasirandom(dodge.width = 0.6, alpha = 0.5) + 
   theme(
     legend.position = c(.95, .95),
     legend.justification = c("right", "top"),
     legend.box.just = "right",
-    legend.margin = margin(6, 6, 6, 6)
-    ) +
+    legend.margin = margin(6, 6, 6, 6)) +
   labs(col = "Sex") +
-  labs(x = "Sex", y = "Learning Response", title = "Aversive Learning in Zebrafish") +
+  labs(x = "Sex", y = "Association Response", title = "Aversive Learning in Zebrafish") +
+  scale_color_manual(values = sex_cols1) +
   theme(legend.key = element_rect(fill = "white", colour = "grey90"))
 
 fig2B <- col_pref %>% 
@@ -61,7 +64,7 @@ fig2B <- col_pref %>%
   geom_hline(yintercept = 30, linetype = "dashed", colour = "grey40", size = 0.5) +
   geom_quasirandom(dodge.width = 0.4, alpha = 0.5) +
   scale_color_manual(values = pref_cols) +
-  labs(x = "Colour", y = "Preference", title = "Colour Preference During the Baseline Period") +
+  labs(x = "Colour", y = "Relative Colour Preference", title = "Colour Preference During the Baseline Period") +
   theme(legend.position = "none") +
   scale_x_discrete(name = "Stimulus",labels = c("Grey\nCheck", "Green\nBlue", "Red\nYellow", "Orange\nMagenta"))
 
@@ -108,28 +111,6 @@ Figure_3 <- ggarrange(fig3A, fig3B,
 Figure_3
 ```
 
-###Alt Figure 2
-```{r}
-Cols <- c("Across" = "#000000","Green_Blue" = "#009E73", "Blue_Green" = "#56B4E9", "All" = "#9999CC", "Third" = "#9999CC", "Second" = "#9999CC", "First" = "#9999CC")
-
-Shapes <- c("Across" = 16,"Green_Blue" = 15, "Blue_Green" = 15, "All" = 15, "Third" = 18, "Second" = 17, "First" = 16)
-
-rpt_figure <- ggplot(data = rpt_outputs, aes(x = conditions, y = R, colour = conditions)) +
-  geom_errorbar(aes(ymin = lowCI, ymax = highCI), width = 0.3, position = position_dodge(0.3), size = 1.1) +
-  geom_point(aes(x = conditions, y = R), position = position_dodge(0.3), shape = Shapes, size = 3.5) +
-  geom_hline(yintercept = 0, lty = "dotted") +
-  labs(x = "Condition", y = "Repeatability (R)", title = "Repeatabiltiy of Aversive Learning in Different Conditions") +
-  facet_col(vars(CS), scales = "free_y", space = "free") + #facet_col produces a better forest plot than facet_wrap
-  guides(col = guide_legend("Measurement"), shape = guide_legend(shape = Shapes)) +
-  scale_colour_manual(values = Cols, limits = c("First", "Second", "Third","All")) +
-  ylim(0, 0.4) +
-  #scale_shape_manual(values = Shapes, limits = c("First", "Second", "Third","All")) +
-  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank(), legend.position = c(0.90, 0.2), plot.title = element_text(hjust = 0.5)) +
-  coord_flip()
-
-rpt_figure
-```
-
 #Secondary Visualisation
 ##Exp and Sex differences
 ```{r, Beeswarm plots of sex & exp in different conditions}
@@ -157,31 +138,6 @@ ggplot(allbg, aes(sex, difference, color=sex)) +
 
 ##Rpt Figure Sexes Split
 ```{r forest plot with all conditions and sex groupings}
-rpt_outputs_all[sapply(rpt_outputs_all, is.character)] <- lapply(rpt_outputs_all[sapply(rpt_outputs_all, is.character)], as.factor) #turning chr to factors
-
-sex_cols <- c("Female" = "#D55E00","Male" = "#009E73", "Mixed" = "#999999")
-
-rpt_outputs_all %<>% mutate(Sex = case_when (grepl("_Male", conditions) ~ "Male",
-                                             grepl("_Female", conditions) ~ "Female",
-                                             grepl("Green_Blue", conditions) ~ "Mixed",
-                                             grepl("Blue_Green", conditions) ~ "Mixed",
-                                             grepl("First", conditions) ~ "Mixed",
-                                             grepl("Second", conditions) ~ "Mixed",
-                                             grepl("Third", conditions) ~ "Mixed",
-                                             grepl("All", conditions) ~ "Mixed",
-                                             grepl("Across", conditions) ~ "Mixed")) %>% 
-                     mutate(CS = case_when (grepl("Blue/", conditions) ~ "Blue",
-                                            grepl("_Blue", conditions) ~ "Blue",
-                                            grepl("Green/", conditions) ~ "Green",
-                                            grepl("_Green", conditions) ~ "Green",
-                                            grepl("First", conditions) ~ "Both",
-                                            grepl("Second", conditions) ~ "Both",
-                                            grepl("Third", conditions) ~ "Both",
-                                            grepl("All", conditions) ~ "Both",
-                                            grepl("Across", conditions) ~ "All"))
-
-rpt_outputs_all$CS = factor(rpt_outputs_all$CS, levels = c('All','Green','Blue','Both')) #ordering factors correctly for visualisation
-
 rpt_outputs_all[1, 1] <- "Across"
 rpt_outputs_all[2, 1] <- "Green/Blue"
 rpt_outputs_all[3, 1] <- "Blue/Green"
@@ -204,22 +160,42 @@ rpt_outputs_all[19, 1] <- "Third Female"
 rpt_outputs_all[20, 1] <- "All Male"
 rpt_outputs_all[21, 1] <- "All Female"
 
+rpt_outputs_all %<>% mutate(Sex = case_when (grepl("Male", conditions) ~ "Male",
+                                             grepl("Female", conditions) ~ "Female",
+                                             grepl("Green/Blue", conditions) ~ "Mixed",
+                                             grepl("Blue/Green", conditions) ~ "Mixed",
+                                             grepl("First", conditions) ~ "Mixed",
+                                             grepl("Second", conditions) ~ "Mixed",
+                                             grepl("Third", conditions) ~ "Mixed",
+                                             grepl("All", conditions) ~ "Mixed",
+                                             grepl("Across", conditions) ~ "Mixed")) %>% 
+                     mutate(CS = case_when (grepl("Blue/", conditions) ~ "Blue",
+                                            grepl("Green/", conditions) ~ "Green",
+                                            grepl("First", conditions) ~ "Both",
+                                            grepl("Second", conditions) ~ "Both",
+                                            grepl("Third", conditions) ~ "Both",
+                                            grepl("All", conditions) ~ "Both",
+                                            grepl("Across", conditions) ~ "All"))
+
+rpt_outputs_all[sapply(rpt_outputs_all, is.character)] <- lapply(rpt_outputs_all[sapply(rpt_outputs_all, is.character)], as.factor) #turning chr to factors
+
+sex_cols <- c("Female" = "#CC79A7","Male" = "#56B4E9", "Mixed" = "#999999")
+
+rpt_outputs_all$CS = factor(rpt_outputs_all$CS, levels = c('All','Green','Blue','Both')) #ordering factors correctly for visualisation
+
 rpt_outputs_all$conditions = factor(rpt_outputs_all$conditions, levels = c("Across","Across Male","Across Female","Green/Blue", "Green/Blue Male", "Green/Blue Female", "Blue/Green", "Blue/Green Male", "Blue/Green Female","First",  "First Male", "First Female", "Second", "Second Male", "Second Female", "Third", "Third Male", "Third Female", "All", "All Male", "All Female"))
 
 ##forest plot showing r estimate and 95% CI, conditions grouped according to CS+
-forest_rpt_outputs_all <- ggplot(data = rpt_outputs_all, aes(x = conditions, y = R, colour = Sex)) +
+Figure_S3 <- ggplot(data = rpt_outputs_all, aes(x = conditions, y = R, colour = Sex)) +
   geom_errorbar(aes(ymin = lowCI, ymax = highCI), width = 0.05, position = position_dodge(0.3)) +
   geom_point(aes(x = conditions, y = R), position = position_dodge(0.3))+
   geom_hline(yintercept = 0, lty = "dotted") +
   labs(x = "Condition", y = "Repeatability (R)") +
   facet_col(vars(CS), scales = "free_y", space = "free") + #facet_col produces a better forest plot than facet_wrap
-  scale_colour_manual(values = wes_palette("Darjeeling1")) +
+  scale_colour_manual(values = sex_cols) +
   coord_flip()
 
-forest_rpt_outputs_all
-
-# Save an object as a file, ready to import into other rmd document
-saveRDS(rpt_outputs_all, file = "rpt_outputs_all.rds")
+Figure_S3
 ```
 
 ##Violin and Beeswarm plot
@@ -284,7 +260,6 @@ col_pref %>%
   geom_hline(yintercept = 30, linetype = "dashed", colour = "grey40", size = 0.5) +
   geom_quasirandom(dodge.width = 0.4, alpha = 0.5) +
   scale_color_manual(values = pref_cols) +
-  c
   theme(legend.position = "none") +
   scale_x_discrete(name = "Stimulus",labels = c("Grey\nCheck", "Green\nBlue", "Red\nYellow", "Orange\nMagenta"))
 
@@ -331,10 +306,6 @@ e2 %>%
 ```
 
 ```{r}
-
-```
-
-```{r}
 e1_data %>% filter(zone == "CS") %>% group_by(exp, unit) %>% 
   summarise(mean=mean(time_min), sd=sd(time_min), se=sd(time_min)/sqrt(n())) -> e1_sum
 
@@ -344,21 +315,30 @@ probe_draw <- function(dat, condition = "", title = "") {
   gplot <- ggplot(dat, aes(unit, mean)) +
   geom_bar(position=position_dodge(), stat= "identity", width = 0.7, colour="black") +
   geom_errorbar(aes(ymin=mean - se, ymax = mean + se), width = 0.4, colour = "black", position=position_dodge(0.9)) +
-  labs(x = "Minute  Increments in Probe Period", y = "Time Spent in CS+ During Probe (seconds per minute) ± SE", title = title) +
+  labs(x = "Minute  Increments in Probe Period", y = "CS+ avoidance ± SE", title = title) +
   ylim(0,45)
   
   print(gplot)
 }
 
-probe_draw(e1_sum, condition = "REDYEL", title = "Red/Yellow Condition")
-probe_draw(e1_sum, condition = "YELRED", title = "Yellow/Red Condition")
-probe_draw(e1_sum, condition = "GREBLU", title = "Green/Blue Condition")
-probe_draw(e1_sum, condition = "BLUGRE", title = "Blue/Green Condition")
-probe_draw(e1_sum, condition = "CHKGRY", title = "Check/Grey Condition")
-probe_draw(e1_sum, condition = "GRYCHK", title = "Grey/Check Condition")
-probe_draw(e1_sum, condition = "ORAMAG", title = "Orange/Magenta Condition")
-probe_draw(e1_sum, condition = "MAGORA", title = "Magenta/Orange Condition")
+probe_draw(e1_sum, condition = "REDYEL", title = "Red/Yellow Condition") -> p1
+probe_draw(e1_sum, condition = "YELRED", title = "Yellow/Red Condition") -> p2
+probe_draw(e1_sum, condition = "GREBLU", title = "Green/Blue Condition") -> p3
+probe_draw(e1_sum, condition = "BLUGRE", title = "Blue/Green Condition") -> p4
+probe_draw(e1_sum, condition = "CHKGRY", title = "Check/Grey Condition") -> p5
+probe_draw(e1_sum, condition = "GRYCHK", title = "Grey/Check Condition") -> p6
+probe_draw(e1_sum, condition = "ORAMAG", title = "Orange/Magenta Condition") -> p7
+probe_draw(e1_sum, condition = "MAGORA", title = "Magenta/Orange Condition") -> p8
+
+
+Figure_S6 <- ggarrange(p1, p2, p2, p4, p5, p6, p7, p8,
+                    ncol = 2, nrow = 4)
+
+Figure_S6
+
 ```
+
+
 
 ```{r}
 e1_sum %>% group_by(unit) %>% 
@@ -375,7 +355,7 @@ probe_draw_all <- function(dat, title = "") {
   print(gplot)
 }
 
-probe_draw_all(e1_sum_all, title =  "All Conditions")
+probe_draw_all(e1_sum_all, title =  "All Conditions") -> Figure_S5
 ```
 
 ```{r}

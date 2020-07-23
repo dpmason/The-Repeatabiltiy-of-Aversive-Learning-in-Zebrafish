@@ -642,3 +642,24 @@ group(a = "CHKCS", b = "CHKNON", c = 3, d = e1_new) -> group_3_new #DF of check 
 group(a = "ORACS", b = "ORANON", c = 4, d = e1_new) -> group_4_new #DF of orange and magenta
 ```
 
+###Alt Figure 2
+```{r}
+Cols <- c("Across" = "#000000","Green_Blue" = "#009E73", "Blue_Green" = "#56B4E9", "All" = "#9999CC", "Third" = "#9999CC", "Second" = "#9999CC", "First" = "#9999CC")
+
+Shapes <- c("Across" = 16,"Green_Blue" = 15, "Blue_Green" = 15, "All" = 15, "Third" = 18, "Second" = 17, "First" = 16)
+
+rpt_figure <- ggplot(data = rpt_outputs, aes(x = conditions, y = R, colour = conditions)) +
+  geom_errorbar(aes(ymin = lowCI, ymax = highCI), width = 0.3, position = position_dodge(0.3), size = 1.1) +
+  geom_point(aes(x = conditions, y = R), position = position_dodge(0.3), shape = Shapes, size = 3.5) +
+  geom_hline(yintercept = 0, lty = "dotted") +
+  labs(x = "Condition", y = "Repeatability (R)", title = "Repeatabiltiy of Aversive Learning in Different Conditions") +
+  facet_col(vars(CS), scales = "free_y", space = "free") + #facet_col produces a better forest plot than facet_wrap
+  guides(col = guide_legend("Measurement"), shape = guide_legend(shape = Shapes)) +
+  scale_colour_manual(values = Cols, limits = c("First", "Second", "Third","All")) +
+  ylim(0, 0.4) +
+  #scale_shape_manual(values = Shapes, limits = c("First", "Second", "Third","All")) +
+  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank(), legend.position = c(0.90, 0.2), plot.title = element_text(hjust = 0.5)) +
+  coord_flip()
+
+rpt_figure
+```

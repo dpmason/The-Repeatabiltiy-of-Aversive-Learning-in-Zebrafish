@@ -2,4 +2,10 @@ Figure_2
 
 Figure_3
 
-forest_rpt_outputs_all
+Figure_S3
+
+Figure_S4
+
+Figure_S5
+
+Figure_S6

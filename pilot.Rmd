@@ -81,13 +81,17 @@ full_join(dat_2, dat_5) %>%  mutate(voltage = case_when(grepl("BG5", filepath) ~
 ```{r}
 volt_data %>% filter(test == "CHECK") %>% group_by(test, voltage) %>% summarise(mean = mean(difference), sd = sd(difference), se = sd(difference)/sqrt(n())) -> volt_sum
 
-plot1 <- ggplot(volt_sum, aes(voltage, mean)) +
+Figure_S4 <- ggplot(volt_sum, aes(voltage, mean)) +
   geom_bar(position=position_dodge(), stat= "identity", width = 0.7, colour="black") +
   geom_errorbar(aes(ymin=mean - se, ymax = mean + se), width = 0.4, colour = "black", position=position_dodge(0.9)) +
   xlab("Unconditioned Stimulus Voltage") +
   ylab("Association Response (seconds per minute) ± SD") +
   ylim(0,15)
 
-plot1
+Figure_S4
+```
+
+```{r}
+
 ```
 

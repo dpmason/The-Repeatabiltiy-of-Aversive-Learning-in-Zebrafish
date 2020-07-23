@@ -416,10 +416,11 @@ rpt_output(orange_pref_female) -> orange_pref_female_output
 
 rename_rm_col(rbind(Across_Male, Across_Female, GreenBlue_Male, GreenBlue_Female, BlueGreen_Male, BlueGreen_Female, First_Male, First_Female, Second_Male, Second_Female, Third_Male, Third_Female, All_Male, All_Female), c("Across_Male", "Across_Female", "Green/Blue_Male", "Green/Blue_Female", "Blue/Green_Male", "Blue/Green_Female", "First_Male", "First_Female", "Second_Male", "Second_Female", "Third_Male", "Third_Female", "All_Male", "All_Female")) -> rpt_outputs_sex #df rpt outputs sex separated
 
-rename_rm_col(rbind(red_pref_male_output, red_pref_female_output, green_pref_male_output, green_pref_female_output, check_pref_male_output, check_pref_female_output, orange_pref_male_output, orange_pref_female_output), c("red_pref_male_output", "red_pref_female_output", "green_pref_male_output", "green_pref_female_output", "check_pref_male_output", "check_pref_female_output", "orange_pref_male_output", "orange_pref_female_output")) -> pref_outputs_sex #df pref rpt outputs sex separated
+rename_rm_col(rbind(red_pref_male_output, red_pref_female_output, green_pref_male_output, green_pref_female_output, check_pref_male_output, check_pref_female_output, orange_pref_male_output, orange_pref_female_output), c("red_pref_male_output", "red_pref_female_output", "green_pref_male_output", "green_pref_female_output", "grey_pref_male_output", "grey_pref_female_output", "orange_pref_male_output", "orange_pref_female_output")) -> pref_outputs_sex #df pref rpt outputs sex separated
 
 
 full_join(rpt_outputs, rpt_outputs_sex) -> rpt_outputs_all #repeatability output with original and also sexes split
+full_join(pref_outputs, pref_outputs_sex) -> pref_outputs_all
 ```
 
 ##Repeatabiltiy Tables
@@ -428,11 +429,13 @@ write.table(rpt_outputs, file = "rpt_outputs_table.csv", sep = ",", row.names = 
 
 write.table(rpt_outputs_sex, file = "rpt_outputs_sex_table.csv", sep = ",", row.names = FALSE)
 
+write.table(rpt_outputs_all, file = "rpt_outputs_all_table.csv", sep = ",", row.names = FALSE)
+
 write.table(pref_outputs, file = "pref_outputs_table.csv", sep = ",", row.names = FALSE)
 
 write.table(pref_outputs_sex, file = "pref_outputs_sex_table.csv", sep = ",", row.names = FALSE)
 
-write.table(rpt_outputs_all, file = "rpt_outputs_all_table.csv", sep = ",", row.names = FALSE)
+write.table(pref_outputs_all, file = "pref_outputs_all_table.csv", sep = ",", row.names = FALSE)
 ```
 
 #Clear Environment
