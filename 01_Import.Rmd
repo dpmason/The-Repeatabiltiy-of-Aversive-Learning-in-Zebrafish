@@ -209,7 +209,7 @@ missing_data <- map(unlist(all_path), import_csv) %>% bind_rows() %>% as_tibble(
                     mutate(exp_group = case_when (grepl("MAGORA", exp) ~ "4")) %>%
                     mutate(day = as.numeric(day))
 
-missing_probe <- read.csv("./data/missing_probe.csv") #loads missing probe data csv into a df
+missing_probe <- read.csv("./Data/Missing Data/missing_probe.csv") #loads missing probe data csv into a df
 
 missing_probe %<>% mutate(date = as.Date(date)) %>% mutate(marking = as.character(marking)) %>%
                    mutate(test = as.character(test)) %>% mutate (filepath = as.character(filepath)) %>%
@@ -326,12 +326,12 @@ add_variables(exp2_size_reduced) -> exp2_reduced
 ```{r selecting & renaming}
 ##selecting which columns to keep and renaming so both experimental data frames have the same variables
 select_rename <- function(x) {
-  x %>% select(tank.x, mark.x, updatedsex, fishID, fish_length, fish_width, test, filepath, day, BASELINE, PROBE, difference, fish_size, zone, exp, exp_group, learning, set) %>% rename(tank = tank.x, mark = mark.x, sex = updatedsex) -> e1_selected
+  x %>% select(tank.x, mark.x, updatedsex, fishID, fish_length, fish_width, test, filepath, day, BASELINE, PROBE, difference, fish_size, zone, exp, exp_group, learning, set) %>% rename(tank = tank.x, mark = mark.x, sex = updatedsex) -> x
 }
 
 select_rename(exp1) -> e1_selected
 
-select_rename(ex1_reduced) -> e1_selected_reduced
+select_rename(exp1_reduced) -> e1_selected_reduced
 
 exp2 %>% select(-marking) -> e2_selected #removes unnecessary variable
 

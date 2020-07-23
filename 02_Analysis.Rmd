@@ -9,7 +9,7 @@ knitr::opts_chunk$set(echo = TRUE)
 #install.packages("pacman")
 library(pacman)
 
-pacman::p_load(tidyverse, ggbeeswarm, rptR, lme4, magrittr)
+pacman::p_load(tidyverse, ggbeeswarm, rptR, lme4, magrittr, sjPlot, glmmTMB)
 ```
 
 #Learning
@@ -35,6 +35,8 @@ plot_model(learn_model_e1, type='diag') #all assumptions
 qqnorm(residuals(learn_model_e1)) #linearity of residuals
 
 scatter.smooth(residuals(learn_model_e1)~fitted(learn_model_e1)) #constant variance
+
+??plot_model
 ```
 
 #Repeatability
@@ -45,7 +47,7 @@ scatter.smooth(residuals(learn_model_e1)~fitted(learn_model_e1)) #constant varia
 #repetability model function for mixed sexes
 rpt_sex <- function(x, y = "") {
   
-x <- rpt(difference ~ sex + (1 | fishID), grname = "fishID", data = x, datatype = "Gaussian", nboot = 100, npermut = 100, adjusted = FALSE) #estimate of enhanced agree repeatability, differing from adjusted since the fixed effects variance is included in the denominator
+x <- rpt(difference ~ sex + (1 | fishID), grname = "fishID", data = x, datatype = "Gaussian", nboot = 1000, npermut = 1000, adjusted = FALSE) #estimate of enhanced agree repeatability, differing from adjusted since the fixed effects variance is included in the denominator
 
 assign(y, x, envir = .GlobalEnv) #assigns output to global environment from within function
 
@@ -54,7 +56,7 @@ x
 
 rpt_nosex <- function(x, y = "") {
   
-x <- rpt(difference ~ 1 + (1 | fishID), grname = "fishID", data = x, datatype = "Gaussian", nboot = 100, npermut = 100, adjusted = FALSE)
+x <- rpt(difference ~ 1 + (1 | fishID), grname = "fishID", data = x, datatype = "Gaussian", nboot = 1000, npermut = 1000, adjusted = FALSE)
 
 assign(y, x, envir = .GlobalEnv) #assigns output to global environment from within function
 
@@ -126,7 +128,7 @@ rpt_sex(allbg, y = "rpt_allbg") #all BLUGRE
 #analysis of grouped measurements, first, second, third, all
 rpt_set_sex <- function(x, y = "") {
   
-x <- rpt(difference ~ set + sex + (1 | fishID), grname = "fishID", data = x, datatype = "Gaussian", nboot = 100, npermut = 0)
+x <- rpt(difference ~ set + sex + (1 | fishID), grname = "fishID", data = x, datatype = "Gaussian", nboot = 1000, npermut = 1000)
 
 assign(y, x, envir = .GlobalEnv) #assigns output to global environment from within function
 
@@ -135,7 +137,7 @@ x
 
 rpt_set <- function(x, y = "") {
   
-x <- rpt(difference ~ set + (1 | fishID), grname = "fishID", data = x, datatype = "Gaussian", nboot = 100, npermut = 0)
+x <- rpt(difference ~ set + (1 | fishID), grname = "fishID", data = x, datatype = "Gaussian", nboot = 1000, npermut = 1000)
 
 assign(y, x, envir = .GlobalEnv) #assigns output to global environment from within function
 
@@ -232,7 +234,7 @@ col_pref_LMM(group_4) -> pref_ora_model
 ##rpt for colour preference
 rpt_pref <- function(x, y = "") { #function that creates df of time spent in one colour over the other in its condition
   
-x <- rpt(BASELINE ~ 1 + (1 | fishID), grname = "fishID", data = x, datatype = "Gaussian", nboot = 100, npermut = 100)
+x <- rpt(BASELINE ~ 1 + (1 | fishID), grname = "fishID", data = x, datatype = "Gaussian", nboot = 1000, npermut = 1000)
 
 assign(y, x, envir = .GlobalEnv) #assigns output to global environment from within function
 
@@ -270,7 +272,7 @@ summary(reverse_model_e1)
 reverse_e1 <- lmer(difference ~ learning + day + relevel(sex, ref = "male") + scale(fish_size) + (1 | exp) + (1 | fishID), data = e1)
 summary(reverse_e1)
 
-reverse_e1_reduced <- lmer(difference ~ learning + I(day-8) + relevel(sex, ref = "male") + scale(fish_size) + (1 | exp) + (1 | fishID), data = e1_reduced)
+#reverse_e1_reduced <- lmer(difference ~ learning + I(day-8) + relevel(sex, ref = "male") + scale(fish_size) + (1 | exp) + (1 | fishID), data = e1_reduced)
 summary(reverse_e1_reduced)
 
 reverse_e1_reduced <- lmer(difference ~ learning + day + sex + scale(fish_size) + (1 | exp) + (1 | fishID), data = e1_reduced)
@@ -337,8 +339,6 @@ rpt_output(red_pref) -> Red
 rpt_output(green_pref) -> Green
 rpt_output(grey_pref) -> Grey
 rpt_output(orange_pref) -> Orange
-
-rpt_outputs
 ```
 
 ##Renaming Rpt Outputs
@@ -371,7 +371,7 @@ rename_output_func(x2) -> x
 
 rename_rm_col(rbind(Across_Conditions, Green_Blue, Blue_Green, First, Second, Third, All), c("Across", "Green_Blue", "Blue_Green", "First", "Second", "Third", "All")) -> rpt_outputs
 
-rename_rm_col(rbind(Red, Green, Check, Orange), c("Red", "Green", "Grey", "Orange")) -> pref_outputs
+rename_rm_col(rbind(Red, Green, Grey, Orange), c("Red", "Green", "Grey", "Orange")) -> pref_outputs
 ```
 
 ##Rpt Outputs Sex
