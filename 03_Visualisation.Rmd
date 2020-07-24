@@ -46,8 +46,8 @@ sex_cols1 <- c("male" = "#56B4E9", "female" = "#CC79A7")
 fig2A <-  e1 %>% 
   ggplot(aes(sex, difference,  col = sex)) + 
   geom_hline(yintercept = 0, linetype = "dashed", colour = "grey40", size = 0.5) +
-  geom_hline(yintercept = 2.695262, colour = "#56B4E9", size = 1.5) +
-  geom_hline(yintercept = 5.063168, colour = "#CC79A7", size = 1.5) +
+  geom_hline(yintercept = 2.695262, colour = "#CC79A7", size = 1.5) +
+  geom_hline(yintercept = 5.063168, colour = "#56B4E9", size = 1.5) +
   geom_quasirandom(dodge.width = 0.6, alpha = 0.5) + 
   theme(
     legend.position = c(.95, .95),
