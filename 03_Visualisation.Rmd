@@ -57,7 +57,8 @@ fig2A <-  e1 %>%
   labs(col = "Sex") +
   labs(x = "Sex", y = "Association Response", title = "Aversive Learning in Zebrafish") +
   scale_color_manual(values = sex_cols1) +
-  theme(legend.key = element_rect(fill = "white", colour = "grey90"))
+  theme(legend.key = element_rect(fill = "white", colour = "grey90")) +
+  theme(axis.text.x = element_text(size = 11))
 
 fig2B <- col_pref %>% 
   ggplot(aes(stim, pref, col = stim)) + 
@@ -66,7 +67,8 @@ fig2B <- col_pref %>%
   scale_color_manual(values = pref_cols) +
   labs(x = "Colour", y = "Relative Colour Preference", title = "Colour Preference During the Baseline Period") +
   theme(legend.position = "none") +
-  scale_x_discrete(name = "Stimulus",labels = c("Grey\nCheck", "Green\nBlue", "Red\nYellow", "Orange\nMagenta"))
+  scale_x_discrete(name = "Stimulus",labels = c("Grey\nCheck", "Green\nBlue", "Red\nYellow", "Orange\nMagenta")) +
+  theme(axis.text.x = element_text(size = 11))
 
 Figure_2 <- ggarrange(fig2A, fig2B,
                     labels = c("A", "B"),
@@ -90,6 +92,8 @@ fig3A <- ggplot(data = pref_outputs, aes(x = conditions, y = R, colour = conditi
   ylim(0, 0.63) +
   theme(axis.text.y = element_blank(), axis.ticks.y = element_blank()) +
   theme(legend.position = "none") +
+  theme(axis.text.x = element_text(size = 11)) +
+  theme(strip.text.x = element_text(size = 11)) +
   coord_flip()
 
 fig3B <- ggplot(data = new_outputs, aes(x = conditions, y = R, colour = conditions)) +
@@ -101,6 +105,8 @@ fig3B <- ggplot(data = new_outputs, aes(x = conditions, y = R, colour = conditio
   scale_colour_manual(values = new_cols) +
   ylim(0, 0.63) +
   theme(axis.text.y = element_blank(), axis.ticks.y = element_blank()) +
+  theme(axis.text.x = element_text(size = 11)) +
+  theme(strip.text.x = element_text(size = 11)) +
   theme(legend.position = "none") +
   coord_flip()
 

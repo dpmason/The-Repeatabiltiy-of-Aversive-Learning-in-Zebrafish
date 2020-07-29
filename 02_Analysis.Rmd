@@ -19,13 +19,17 @@ pacman::p_load(tidyverse, ggbeeswarm, rptR, lme4, magrittr, sjPlot, glmmTMB, lme
 learn_model_e1 <- lmer(difference ~ scale(day) + sex + scale(fish_size) + learning + (1 | exp) + (1 | fishID), data = e1) #z-scaling, if you scale fish size you have to scale day as well
 
 summary(learn_model_e1)
+
+tab_model(learn_model_e1)
 ```
 
 ##Learning Exp2
 ```{r}
-learn_model_e2 <- lmer(difference ~ scale(day) + sex + scale(fish_size) + exp + (1 | fishID), data = e2)
+learn_model_e2 <- lmer(difference ~ scale(day) + sex + scale(fish_size) + learning + exp + (1 | fishID), data = e2)
 
 summary(learn_model_e2)
+
+tab_model(learn_model_e2)
 ```
 
 ##Check Assumptions
@@ -222,11 +226,19 @@ col_pref_LMM <- function(df){
 
 col_pref_LMM(group_1) -> pref_red_model
 
+tab_model(pref_red_model)
+
 col_pref_LMM(group_2) -> pref_gre_model
+
+tab_model(pref_gre_model)
 
 col_pref_LMM(group_3) -> pref_chk_model
 
+tab_model(pref_chk_model)
+
 col_pref_LMM(group_4) -> pref_ora_model
+
+tab_model(pref_ora_model)
 ```
 
 ##Repeatability of Colour Preference
