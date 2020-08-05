@@ -144,6 +144,7 @@ ggplot(allbg, aes(sex, difference, color=sex)) +
 
 ##Rpt Figure Sexes Split
 ```{r forest plot with all conditions and sex groupings}
+#renaming values to be put in figures
 rpt_outputs_all[1, 1] <- "Across"
 rpt_outputs_all[2, 1] <- "Green/Blue"
 rpt_outputs_all[3, 1] <- "Blue/Green"
@@ -297,6 +298,7 @@ e1 %>%
   theme(legend.position = "none")
 ```
 
+#Visualisation of Day Effect
 ```{r}
 e1 %>% 
   ggplot(aes(day, difference, col = day)) + 
@@ -310,7 +312,8 @@ e2 %>%
   geom_quasirandom(dodge.width = 0.1, alpha = 0.5) +
   theme(legend.position = "none")
 ```
-
+#Supplmentary Figures
+##Supplementary Figure 6
 ```{r}
 e1_data %>% filter(zone == "CS") %>% group_by(exp, unit) %>% 
   summarise(mean=mean(time_min), sd=sd(time_min), se=sd(time_min)/sqrt(n())) -> e1_sum
@@ -341,11 +344,9 @@ Figure_S6 <- ggarrange(p1, p2, p2, p4, p5, p6, p7, p8,
                     ncol = 2, nrow = 4)
 
 Figure_S6
-
 ```
 
-
-
+##Supplementary Fiure 5
 ```{r}
 e1_sum %>% group_by(unit) %>% 
   summarise(mean=mean(mean), sd=sd(sd), se=sd(se)/sqrt(n())) -> e1_sum_all

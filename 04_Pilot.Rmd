@@ -1,5 +1,5 @@
 ---
-title: "pilot"
+title: "Pilot"
 output: html_document
 ---
 
@@ -11,6 +11,7 @@ pacman::p_load(tidyverse)
 source("./Scripts/functions.R")
 ```
 
+#Functions
 ```{r}
 add_diff <- function(x) { #spreads data and adds the response variable 'difference'
   
@@ -26,7 +27,10 @@ x %>% mutate(day = case_when (grepl("day1", filepath) ~ "1",
 }
 ```
 
+#Importing Data
+##Import Day 1 & 2
 ```{r}
+#Days 1 & 2 had 2 minute probe phases
 path <- paste0("./volttest/day", 1:2, "/") #creates a section of the raw data filepaths
 
 all_path <- map(path,  ~list.files(path = .)[str_detect(list.files(path = .), ".csv")] ) %>% map2(.,path,~ paste0(.y, .x)) 
@@ -43,7 +47,11 @@ volt_2 <- map(unlist(all_path), import_csv) %>% #uses import_csv function from t
   add_day
 
 head(volt_2)
+```
 
+#Import Day 3
+```{r}
+#Day 3 had a 6 minute probe phases
 path <- paste0("./volttest/day", 3, "/") #creates a section of the raw data filepaths
 
 all_path <- map(path,  ~list.files(path = .)[str_detect(list.files(path = .), ".csv")] ) %>% map2(.,path,~ paste0(.y, .x)) 
@@ -62,7 +70,9 @@ volt_5 <- map(unlist(all_path), import_csv) %>% #uses import_csv function from t
 head(volt_5)
 ```
 
+#Joining Data Sets
 ```{r}
+#can now join after importing separately due to different probe times
 volt_2 %>%
   group_by(marking, filepath, day, type, test) %>%
   summarise(time = mean(time_min), arena = unique(arena)) %>%
@@ -78,6 +88,7 @@ full_join(dat_2, dat_5) %>%  mutate(voltage = case_when(grepl("BG5", filepath) ~
                              grepl("BG9", filepath) ~ "9")) -> volt_data
 ```
 
+#Figure S4
 ```{r}
 volt_data %>% filter(test == "CHECK") %>% group_by(test, voltage) %>% summarise(mean = mean(difference), sd = sd(difference), se = sd(difference)/sqrt(n())) -> volt_sum
 

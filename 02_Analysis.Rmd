@@ -20,7 +20,7 @@ learn_model_e1 <- lmer(difference ~ scale(day) + sex + scale(fish_size) + learni
 
 summary(learn_model_e1)
 
-tab_model(learn_model_e1)
+tab_model(learn_model_e1) #output table with p-values and random effects
 ```
 
 ##Learning Exp2
@@ -39,8 +39,6 @@ plot_model(learn_model_e1, type='diag') #all assumptions
 qqnorm(residuals(learn_model_e1)) #linearity of residuals
 
 scatter.smooth(residuals(learn_model_e1)~fitted(learn_model_e1)) #constant variance
-
-??plot_model
 ```
 
 #Repeatability
@@ -204,7 +202,8 @@ gre <- "Green"
 gry <- "Grey"
 ora <- "Orange"
 
-group_1 %>% mutate(pref = BASELINE, stim = red) -> df_red_pref
+#making four groups, each share the same colours
+group_1 %>% mutate(pref = BASELINE, stim = red) -> df_red_pref  
 group_2 %>% mutate(pref = BASELINE, stim = gre) -> df_gre_pref
 group_3 %>% mutate(pref = BASELINE, stim = gry) -> df_gry_pref
 group_4 %>% mutate(pref = BASELINE, stim = ora) -> df_ora_pref
