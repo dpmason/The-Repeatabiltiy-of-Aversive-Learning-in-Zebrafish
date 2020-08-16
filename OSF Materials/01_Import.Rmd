@@ -1,0 +1,448 @@
+---
+title: "Import"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+#install.packages("pacman")
+pacman::p_load(tidyverse, ggbeeswarm, rptR, lme4, magrittr)
+
+# load functions
+source("functions.R") #access to functions in different R script
+```
+
+#Import Exp 1
+```{r importing experiment 1, warning=FALSE}
+## importing csv's & transforming data
+path <- paste0("./Data/Experiment 1 Raw Data/Day", 1:16, "/") #creates a section of the raw data filepaths
+
+all_path <- map(path,  ~list.files(path = .)[str_detect(list.files(path = .), ".csv")] ) %>% map2(.,path,~ paste0(.y, .x)) #creates a list of the complete raw data filepaths
+
+e1_data <- map(unlist(all_path), import_csv) %>% #uses import_csv function from the source script functions.R to modify the raw data into R suitable structure
+  bind_rows() %>% as_tibble() %>% #makes the data frame a tibble
+  group_by(filepath, date, marking, type, test, unit, variable, arena) %>% #groups columns for summarising
+  summarise(total = sum(number)) %>% #summarises time spent
+  filter(variable == "ZONE_TIMERS") %>% #filters the necessary measurement "ZONE TIMERS"
+  group_by(type, marking, test, unit, filepath, date) %>%
+  summarise(sum_time = sum(total), arena = unique(arena)) %>% 
+  arrange(filepath, marking, type, test) %>% #arranges variables in desirable order
+  mutate(time_min = if_else(type == "BASELINE", sum_time/5, sum_time/1)) %>% #standardises BASELINE and PROBE to per minute
+  add_day %>% add_exp %>% add_zone %>% add_tod %>% add_learning %>% add_expgroup %>% #adding variables
+  mutate(day = as.numeric(day)) #changes day variable to numeric 
+```
+
+##Import Missing Data 
+```{r importing missing data experiment 1, warning = F}
+path <- paste0("./Data/Experiment 1 Raw Data/Day9_Missing_Data/")
+
+all_path <- map(path,  ~list.files(path = .)[str_detect(list.files(path = .), ".csv")] ) %>% map2(.,path,~ paste0(.y, .x))
+
+missing_data <- map(unlist(all_path), import_csv) %>% bind_rows() %>% as_tibble() %>% group_by(filepath, date, marking, type, test, unit, variable, arena) %>% summarise(total = sum(number), mean = mean(number)) %>% filter(variable == "ZONE_TIMERS") %>% group_by(type, marking, test, unit, filepath, date) %>% summarise(sum_time = sum(total), arena = unique(arena)) %>% arrange(filepath, marking, type, test) %>% mutate(time_min = if_else(type == "BASELINE", sum_time/5, sum_time/1)) %>% 
+                    mutate(day = case_when (grepl("2019-07-09", date) ~ "9")) %>% 
+                    mutate(exp = case_when (grepl("MOBASELINE", filepath) ~ "MAGORA"))  %>% 
+                    mutate(zone = case_when (grepl("CS", test) ~ "CS",
+                                             grepl("NON", test) ~ "NON")) %>%
+                    mutate(tod = case_when (grepl("PM", filepath) ~ "PM")) %>%
+                    mutate(learning = case_when (grepl("2019-07-09", date) ~ "reverse")) %>%
+                    mutate(exp_group = case_when (grepl("MAGORA", exp) ~ "4")) %>%
+                    mutate(day = as.numeric(day))
+
+missing_probe <- read.csv("./Data/Missing Data/missing_probe.csv") #loads missing probe data csv into a df
+
+missing_probe %<>% mutate(date = as.Date(date)) %>% mutate(marking = as.character(marking)) %>%
+                   mutate(test = as.character(test)) %>% mutate (filepath = as.character(filepath)) %>%
+                   mutate(arena = as.character(arena)) %>% mutate(day = as.numeric(day)) %>%
+                   mutate(exp = as.character(exp)) %>% mutate(zone = as.character(zone)) %>%
+                   mutate(tod = as.character(tod)) %>% mutate(learning = as.character(learning)) %>%
+                   mutate(exp_group = as.character(exp_group))
+
+full_join(missing_data, missing_probe) -> new_missing #joins the missing baseline and probe dfs
+```
+
+##Filtering appropriate time periods 
+```{r, Reduce data to what we want to analyse}
+##filters dfs for wanted BASELINE and PROBE times and creates difference (response variable)
+new_missing %>% 
+  filter(unit %in% c("UNIT1", "UNIT2", "UNIT3", "UNIT4", "UNIT5", "UNIT6", "PROBE1", "PROBE2")) %>% #gets data for all 30 minutes of BASELINE and first two minutes of PROBE
+  group_by(type, marking, test, day) %>%
+  summarise(time = mean(time_min), arena = unique(arena)) %>% add_diff -> missing_filter 
+
+missing_filter %<>% mutate(filepath = fp) #gets time spent in BASELINE - PROBE
+
+e1_data %>% filter(unit %in% c("UNIT1", "UNIT2", "UNIT3", "UNIT4", "UNIT5", "UNIT6", "PROBE1", "PROBE2")) %>%
+  group_by(type, marking, test, filepath, day) %>%
+  summarise(time = mean(time_min), arena = unique(arena)) %>%
+  add_diff -> e1_filter
+
+new_missing %>% filter(unit %in% c("UNIT5", "UNIT6", "PROBE1", "PROBE2")) %>% #gets data for last 10 minutes of BASELINE and first two minutes of PROBE
+  group_by(type, marking, test, day) %>%
+  summarise(time = mean(time_min), arena = unique(arena)) %>%
+  add_diff -> missing_filter_reduced
+
+missing_filter_reduced %<>% mutate(filepath = fp)
+
+e1_data %>% filter(unit %in% c("UNIT5", "UNIT6", "PROBE1", "PROBE2")) %>%
+  group_by(type, marking, test, filepath, day) %>%
+  summarise(time = mean(time_min), arena = unique(arena)) %>%
+  add_diff -> e1_filter_reduced
+```
+
+##Import Size Data Exp 1
+```{r Importing data for size variable}
+##adding in size data
+#fishIDs are not on the size csv, only markings - have to first match markings with fishIDs
+merge <- read.csv("./Data/Experiment 1 Size and ID Data/e1_tank_marking_fishID.csv") #putting experiment 1 fishID and marking data into a df
+size <- read.csv("./Data/Experiment 1 Size and ID Data/e1_size.csv") #putting experiment 1 size and marking data into a df
+
+merge %<>% mutate(tankmark = paste0(tank, mark)) #creating variable with tank and marking to match later in a join
+size %<>% mutate(tankmark = paste0(tank, mark)) 
+
+full_join(e1_filter, missing_filter) -> data_e1 #merging missing and experiment 1 data into one df
+full_join(e1_filter_reduced, missing_filter_reduced) -> data_e1_reduced_time #the same but for reduced baseline time
+
+data_e1 %<>% mutate(fishID = marking) #changes name of "marking" variable to "fishID"
+data_e1_reduced_time %<>% mutate(fishID = marking)
+
+left_join(merge, size, by = "tankmark") -> jointed #merges fishID/marking and size/marking dfs
+left_join(jointed, data_e1, by = "fishID") -> dat_merge #adds size data to df
+left_join(jointed, data_e1_reduced_time, by = "fishID") -> dat_merge_reduced
+
+dat_merge %>% mutate(fish_size = pi*((fish_length/2)*(fish_width/2))) -> exp1 #gets the ellipse area for the fish size
+dat_merge_reduced %>% mutate(fish_size = pi*((fish_length/2)*(fish_width/2))) -> exp1_reduced
+
+exp1 %<>% add_zone %>% add_exp %>% add_expgroup %>% add_learning3 %>% add_set #adds necessary variables
+exp1_reduced %<>% add_zone %>% add_exp %>% add_expgroup %>% add_learning3 %>% add_set
+```
+
+#Import Exp 2
+```{r importing experiment 2}
+##importing raw data forexperiment 2
+path <- paste0("./data/Experiment 2 Raw Data/Day", 1:8, "/")
+
+all_path <- map(path,  ~list.files(path = .)[str_detect(list.files(path = .), ".csv")] ) %>% map2(.,path,~ paste0(.y, .x))
+
+e2_data <- map(unlist(all_path), import_csv) %>% bind_rows() %>% as_tibble() %>% group_by(filepath, date, marking, type, test, unit, variable, arena) %>% summarise(total = sum(number)) %>% filter(variable == "ZONE_TIMERS") %>% group_by(type, marking, test, unit, filepath, date) %>% summarise(sum_time = sum(total), arena = unique(arena)) %>% arrange(filepath, marking, type, test) %>% mutate(time_min = if_else(type == "BASELINE", sum_time/5, sum_time/1)) %>% add_day2 %>% add_exp %>% add_zone %>% add_tod %>% add_learning2 %>% add_expgroup %>% mutate(day = as.numeric(day))
+```
+
+##Import Siza Data Exp 2
+```{r size data exp 2}
+##importing size data for experiment 2
+jointed2 <- read.csv("./Data/Experiment 2 Size and ID Data/e2_fishID_size.csv")
+
+e2_data %>% filter(unit %in% c("UNIT1", "UNIT2", "UNIT3", "UNIT4", "UNIT5", "UNIT6", "PROBE1", "PROBE2")) %>%
+  group_by(type, marking, test, filepath, day) %>%
+  summarise(time = mean(time_min), arena = unique(arena)) %>%
+               add_diff -> e2_filter
+
+e2_data %>% filter(unit %in% c("UNIT5", "UNIT6", "PROBE1", "PROBE2")) %>%
+  group_by(type, marking, test, filepath, day) %>%
+  summarise(time = mean(time_min), arena = unique(arena)) %>%
+               add_diff -> e2_filter_reduced
+
+e2_filter %<>% mutate(fishID = marking) #corrects variable name from marking to fishID 
+e2_filter_reduced %<>% mutate(fishID = marking)
+
+left_join(jointed2, e2_filter, by = "fishID") -> dat_merge2 
+left_join(jointed2, e2_filter_reduced, by = "fishID") -> dat_merge2_reduced
+
+dat_merge2 %>% mutate(fish_size = pi*((fish_length/2)*(fish_width/2))) -> exp2_size
+dat_merge2_reduced %>% mutate(fish_size = pi*((fish_length/2)*(fish_width/2))) -> exp2_size_reduced
+
+#function that adds imoprtant variables back to the dataframe
+add_variables <- function(x) {
+  x %>% add_zone %>% add_exp %>% add_expgroup %>% add_learning2 %>% add_set2 
+}
+
+add_variables(exp2_size) -> exp2
+add_variables(exp2_size_reduced) -> exp2_reduced 
+```
+
+#Tidying Data
+##Tidying Both Exps
+```{r selecting & renaming}
+##selecting which columns to keep and renaming so both experimental data frames have the same variables
+select_rename <- function(x) {
+  x %>% select(tank.x, mark.x, updatedsex, fishID, fish_length, fish_width, test, filepath, day, BASELINE, PROBE, difference, fish_size, zone, exp, exp_group, learning, set) %>% rename(tank = tank.x, mark = mark.x, sex = updatedsex) -> x
+}
+
+select_rename(exp1) -> e1_selected
+
+select_rename(exp1_reduced) -> e1_selected_reduced
+
+exp2 %>% select(-marking) -> e2_selected #removes unnecessary variable
+
+exp2_reduced %>% select(-marking) -> e2_selected_reduced
+
+## removing non-CS value as its only a mirror of CS
+cs_only(e1_selected) -> e1
+cs_only(e2_selected) -> e2
+cs_only(e1_selected_reduced) -> e1_reduced
+cs_only(e2_selected_reduced) -> e2_reduced
+
+full_join(e1, e2) -> bothexp
+
+e1 %<>% add_tod() #adding time of day to DF
+
+#changing all character variables to factors in the DFs
+e1[sapply(e1, is.character)] <- lapply(e1[sapply(e1, is.character)], as.factor)
+
+e2[sapply(e2, is.character)] <- lapply(e2[sapply(e2, is.character)], as.factor)
+```
+
+#Filtering Single Conditions
+##Filtering GB Condition
+```{r filtering and joining GREBLU, warning = F}
+## GREBLU filter function
+gb_only <- function (x) {
+  x %>% filter(exp == "GREBLU")
+}
+#filtering only GREBLU assay
+gb_only(e1) -> e1gb
+gb_only(e2) -> e2gb
+gb_only(e1_reduced) -> e1gb_reduced
+gb_only(e2_reduced) -> e2gb_reduced
+
+#joining GREBLU assays in experiment 1 and 2
+full_join(e1gb, e2gb) -> allgb
+
+full_join(e1gb_reduced, e2gb_reduced) -> allgb_reduced
+```
+
+##Filtering BG Condition
+```{r filtering and joining BLUGRE, warning = F}
+#filtering only BLUGRE assay
+e1 %>% filter(exp == "BLUGRE") -> e1bg
+
+e2 %>% filter(exp == "BLUGRE") -> e2bg
+
+e1_reduced %>% filter(exp == "BLUGRE") -> e1bg_reduced
+
+e2_reduced %>% filter(exp == "BLUGRE") -> e2bg_reduced
+
+full_join(e1bg, e2bg) -> allbg
+
+full_join(e1bg_reduced, e2bg_reduced) -> allbg_reduced
+```
+
+##Joining Conditions & Experiments
+```{r Creating data sets of combined conditions and experiments, warning = F}
+##joining single conditions and whole experiments
+#joining GREBLU and BLUGRE assays
+full_join(allgb, allbg) -> allgbbg
+
+full_join(allgb_reduced, allbg_reduced) -> allgbbg_reduced
+
+#joining both full experiments
+full_join(e1, e2) -> allexp
+
+full_join(e1_reduced, e2_reduced) -> allexp_reduced
+```
+
+#Creating Meansurement Sets
+```{r making measurement sets for single conditions}
+## filtering single conditions GREBLU and BLUGRE in groups when they were measured
+allgbbg %>% filter(set %in% c("firstg","firstb")) -> first
+
+allgbbg %>% filter(set %in% c("secondg","secondb")) -> second
+
+allgbbg %>% filter(set %in% c("thirdg","thirdb")) -> third
+
+allgbbg_reduced %>% filter(set %in% c("firstg","firstb")) -> first_reduced
+
+allgbbg_reduced %>% filter(set %in% c("secondg","secondb")) -> second_reduced
+
+allgbbg_reduced %>% filter(set %in% c("thirdg","thirdb")) -> third_reduced
+
+#filtering single conditions
+allgb %>% filter(set %in% c("firstg","secondg")) -> first_second_g
+
+allbg %>% filter(set %in% c("firstb","secondb")) -> first_second_b
+
+allgb %>% filter(set %in% c("firstg","thirdg")) -> first_third_g
+
+allbg %>% filter(set %in% c("firstb","thirdb")) -> first_third_b
+
+allgb %>% filter(set %in% c("secondg","thirdg")) -> second_third_g
+
+allbg %>% filter(set %in% c("secondb","thirdb")) -> second_third_b
+
+allgb_reduced %>% filter(set %in% c("firstg","secondg")) -> first_second_g_reduced
+
+allbg_reduced %>% filter(set %in% c("firstb","secondb")) -> first_second_b_reduced
+
+allgb_reduced %>% filter(set %in% c("firstg","thirdg")) -> first_third_g_reduced
+
+allbg_reduced %>% filter(set %in% c("firstb","thirdb")) -> first_third_b_reduced
+
+allgb_reduced %>% filter(set %in% c("secondg","thirdg")) -> second_third_g_reduced
+
+allbg_reduced %>% filter(set %in% c("secondb","thirdb")) -> second_third_b_reduced
+```
+
+#Removing Size Data
+```{r selecting out size data in data sets}
+## selecting out size data for models to analyse effect of keeping size in models vs not
+#function for removing size data
+rm_size <- function(a) {
+  arrange(a, fishID) -> x
+  x %>% select(-fish_length, -fish_width, -fish_size)
+}
+
+rm_size(allgb)  -> allgb_no_size
+rm_size(e2gb)   -> e2gb_no_size
+rm_size(e2bg)   -> e2bg_no_size
+rm_size(e1)     -> e1_no_size
+rm_size(allbg)  -> allbg_no_size
+rm_size(first)  -> first_no_size
+rm_size(second) -> second_no_size
+rm_size(third)  -> third_no_size
+```
+
+#Making Col Preference DFs
+```{r filtering and grouping colours exp1}
+e1_selected %>% add_tod() -> e1_new #original DF before  it was filtered for only the CS
+
+e2_selected %>% add_tod() -> e2_new
+
+##group RED/YEL GRE/BLU CHK/GRY ORA/MAG to assess colour preference in the baseline period
+group <- function(a = "", b = "", c = "", d = "") {
+  d %>% filter(exp_group == c) %>% filter(test %in% c(a, b)) -> x
+}
+
+group(a = "REDCS", b = "REDNON", c = 1, d = e1_new) -> group_1 #DF of red and yellow
+
+group(a = "GRECS", b = "GRENON", c = 2, d = e1_new) -> group_2 #DF of green and blue
+
+group(a = "GRYCS", b = "GRYNON", c = 3, d = e1_new) -> group_3 #DF of grey and check
+
+group(a = "ORACS", b = "ORANON", c = 4, d = e1_new) -> group_4 #DF of orange and magenta
+
+##experiment 2
+group(a = "GRECS", b = "GRENON", c = 2, d = e2_new) -> group_exp2
+```
+
+#Separating Sex
+##Separating Sex in Rpt DFs
+```{r separate into two dfs - male & female}
+##filtering male and female data sets
+
+#function for filtering sex
+filter_sex <- function(df, x = "", y = "") {
+  df %>% filter(sex == "male") -> filtered_male 
+  assign(x, filtered_male, envir = .GlobalEnv)
+  df %>% filter(sex == "female") -> filtered_female
+  assign(y, filtered_female,envir = .GlobalEnv)
+}
+
+filter_sex(e1, x = "e1_male", y = "e1_female")
+filter_sex(allgb, x = "allgb_male", y = "allgb_female")
+filter_sex(allbg, x = "allbg_male", y = "allbg_female")
+filter_sex(first, x = "first_male", y = "first_female")
+filter_sex(second, x = "second_male", y = "second_female")
+filter_sex(third, x = "third_male", y = "third_female")
+filter_sex(allgbbg, x = "allgbbg_male", y = "allgbbg_female")
+```
+
+##Separating Sex in Pref DFs
+```{r filtering sex for preference data}
+#filtering preference data
+filter_sex <- function(df, x = "", y = "") {
+  df %>% filter(sex == "male") -> filtered_male 
+  assign(x, filtered_male, envir = .GlobalEnv)
+  df %>% filter(sex == "female") -> filtered_female
+  assign(y, filtered_female,envir = .GlobalEnv)
+}
+
+filter_sex(group_1, x = "group_1_male", y = "group_1_female")
+filter_sex(group_2, x = "group_2_male", y = "group_2_female")
+filter_sex(group_3, x = "group_3_male", y = "group_3_female")
+filter_sex(group_4, x = "group_4_male", y = "group_4_female")
+```
+
+#Rmd Output Prep
+```{r}
+# Save an object as a file, ready to import into other rmd document
+save(e1_data, e1, e2, e1_male, e1_female, 
+     allgb, allbg, 
+     allgb_male, allgb_female, allbg_male, allbg_female,
+     allgbbg,
+     allgbbg_male, allgbbg_female,
+     first, second, third, 
+     first_male, first_female, 
+     second_male, second_female,
+     third_male, third_female,
+     group_1, group_2, group_3, group_4,
+     group_1_male, group_1_female, 
+     group_2_male, group_2_female,
+     group_3_male, group_3_female,
+     group_4_male, group_4_female,
+     file = "./Data/processed_data.Rdata")
+```
+
+# Import Pilot Data   
+##Import Pilot Day 1 & 2
+```{r}
+#Days 1 & 2 had 2 minute probe phases
+path <- paste0("./Data/volttest/day", 1:2, "/") #creates a section of the raw data filepaths
+
+all_path <- map(path,  ~list.files(path = .)[str_detect(list.files(path = .), ".csv")] ) %>% map2(.,path,~ paste0(.y, .x)) 
+
+volt_2 <- map(unlist(all_path), import_csv) %>% #uses import_csv function from the source script functions.R to modify the raw data into R suitable structure
+  bind_rows() %>% as_tibble() %>% #makes the data frame a tibble
+  group_by(filepath, date, marking, type, test, unit, variable, arena) %>% #groups columns for summarising
+  summarise(total = sum(number)) %>% #summarises time spent
+  filter(variable == "ZONE_TIMERS") %>% #filters the necessary measurement "ZONE TIMERS"
+  group_by(type, marking, test, unit, filepath, date) %>%
+  summarise(sum_time = sum(total), arena = unique(arena)) %>% 
+  arrange(filepath, marking, type, test) %>% #arranges variables in desireable order
+  mutate(time_min = if_else(type == "BASELINE", sum_time/5, sum_time/1)) %>% #standardises BASELINE and PROBE to per minute
+  add_day
+
+head(volt_2)
+```
+
+#Import Day 3
+```{r}
+#Day 3 had a 6 minute probe phases
+path <- paste0("./Data/volttest/day", 3, "/") #creates a section of the raw data filepaths
+
+all_path <- map(path,  ~list.files(path = .)[str_detect(list.files(path = .), ".csv")] ) %>% map2(.,path,~ paste0(.y, .x)) 
+
+volt_5 <- map(unlist(all_path), import_csv) %>% #uses import_csv function from the source script functions.R to modify the raw data into R suitable structure
+  bind_rows() %>% as_tibble() %>% #makes the data frame a tibble
+  group_by(filepath, date, marking, type, test, unit, variable, arena) %>% #groups columns for summarising
+  summarise(total = sum(number)) %>% #summarises time spent
+  filter(variable == "ZONE_TIMERS") %>% #filters the necessary measurement "ZONE TIMERS"
+  group_by(type, marking, test, unit, filepath, date) %>%
+  summarise(sum_time = sum(total), arena = unique(arena)) %>% 
+  arrange(filepath, marking, type, test) %>% #arranges variables in desirable order
+  mutate(time_min = if_else(type == "BASELINE", sum_time/5, sum_time/3)) %>% #standardises BASELINE and PROBE to per minute
+  add_day
+
+head(volt_5)
+```
+
+#Joining Data Sets
+```{r}
+#can now join after importing separately due to different probe times
+volt_2 %>%
+  group_by(marking, filepath, day, type, test) %>%
+  summarise(time = mean(time_min), arena = unique(arena)) %>%
+  add_diff -> dat_2
+
+volt_5 %>%
+    group_by(marking, filepath, day, type, test) %>% 
+  summarise(time = mean(time_min), arena = unique(arena)) %>%
+  add_diff -> dat_5
+
+full_join(dat_2, dat_5) %>%  mutate(voltage = case_when(grepl("BG5", filepath) ~ "5",
+                             grepl("BG7", filepath) ~ "7",
+                             grepl("BG9", filepath) ~ "9")) -> volt_data
+```
+
+## Saving pilot data
+```{r}
+save(volt_data, file = "./Data/pilot_data.Rdata")
+```
