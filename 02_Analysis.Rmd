@@ -7,9 +7,10 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 
 #install.packages("pacman")
-library(pacman)
-
 pacman::p_load(tidyverse, ggbeeswarm, rptR, lme4, magrittr, sjPlot, glmmTMB, lmerTest)
+
+# loading processed data
+load("./Data/processed_data.Rdata")
 ```
 
 #Learning
@@ -35,6 +36,7 @@ tab_model(learn_model_e2)
 ##Check Assumptions
 ```{r}
 plot_model(learn_model_e1, type='diag') #all assumptions
+plot_model(learn_model_e2, type='diag')
 
 qqnorm(residuals(learn_model_e1)) #linearity of residuals
 
@@ -86,7 +88,7 @@ e1_firsthalf
 rpt_sex(e1_firsthalf, y = "rpt_e1_firsthalf") #across conditions rpt model
 ```
 
-##Single Condiion Repeatabilties
+##Single Condition Repeatabilties
 ```{r repeatabilities in single condition}
 #rpt output of all green and also exp2 green
 
