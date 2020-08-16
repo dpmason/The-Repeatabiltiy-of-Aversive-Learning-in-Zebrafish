@@ -7,8 +7,6 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 
 #install.packages("pacman")
-library(pacman)
-
 pacman::p_load(tidyverse, ggbeeswarm, rptR, lme4, ggpubr, ggforce, magrittr)
 
 ###included colours are colourblind-friendly###
