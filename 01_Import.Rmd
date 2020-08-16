@@ -7,8 +7,6 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 
 #install.packages("pacman")
-library(pacman)
-
 pacman::p_load(tidyverse, ggbeeswarm, rptR, lme4, magrittr)
 ```
 
@@ -184,10 +182,10 @@ e1_data <- map(unlist(all_path), import_csv) %>% #uses import_csv function from 
   filter(variable == "ZONE_TIMERS") %>% #filters the necessary measurement "ZONE TIMERS"
   group_by(type, marking, test, unit, filepath, date) %>%
   summarise(sum_time = sum(total), arena = unique(arena)) %>% 
-  arrange(filepath, marking, type, test) %>% #arranges variables in desireable order
+  arrange(filepath, marking, type, test) %>% #arranges variables in desirable order
   mutate(time_min = if_else(type == "BASELINE", sum_time/5, sum_time/1)) %>% #standardises BASELINE and PROBE to per minute
   add_day %>% add_exp %>% add_zone %>% add_tod %>% add_learning %>% add_expgroup %>% #adding variables
-  mutate(day = as.numeric(day)) #changes day varaible to numeric 
+  mutate(day = as.numeric(day)) #changes day variable to numeric 
 
 e1_data #views the new df
 ```
@@ -290,7 +288,7 @@ e2_data
 ##Import Siza Data Exp 2
 ```{r size data exp 2}
 ##importing size data for experiment 2
-jointed2 <- read.csv("../hons/data/Experiment 2 Size and ID Data/e2_fishID_size.csv")
+jointed2 <- read.csv("./Data/Experiment 2 Size and ID Data/e2_fishID_size.csv")
 
 e2_data %>% filter(unit %in% c("UNIT1", "UNIT2", "UNIT3", "UNIT4", "UNIT5", "UNIT6", "PROBE1", "PROBE2")) %>%
   group_by(type, marking, test, filepath, day) %>%
@@ -531,16 +529,28 @@ filter_sex(group_4, x = "group_4_male", y = "group_4_female")
 #Rmd Output Prep
 ```{r}
 # Save an object as a file, ready to import into other rmd document
-saveRDS(e1, file = "e1.rds")
-
-saveRDS(e2, file = "e2.rds")
+save(e1_data, e1, e2, e1_male, e1_female, 
+     allgb, allbg, 
+     allgb_male, allgb_female, allbg_male, allbg_female,
+     allgbbg,
+     allgbbg_male, allgbbg_female,
+     first, second, third, 
+     first_male, first_female, 
+     second_male, second_female,
+     third_male, third_female,
+     group_1, group_2, group_3, group_4,
+     group_1_male, group_1_female, 
+     group_2_male, group_2_female,
+     group_3_male, group_3_female,
+     group_4_male, group_4_female,
+     file = "./Data/processed_data.Rdata")
 ```
 
 #Data Check
 ```{r}
-map_dbl(e1, n_distinct)
-
-map_dbl(e2, n_distinct)
+# map_dbl(e1, n_distinct)
+# 
+# map_dbl(e2, n_distinct)
 ```
 
 
@@ -548,12 +558,3 @@ map_dbl(e2, n_distinct)
 ```{r}
 #rm(list = ls(all.names = TRUE))
 ```
-
-
-
-
-
-
-
-
-

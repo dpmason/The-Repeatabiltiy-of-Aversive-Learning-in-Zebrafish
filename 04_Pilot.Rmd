@@ -102,7 +102,8 @@ Figure_S4 <- ggplot(volt_sum, aes(voltage, mean)) +
 Figure_S4
 ```
 
+## Saving data
 ```{r}
-
+save(volt_data, file = "./Data/pilot_data.Rdata")
 ```
 
