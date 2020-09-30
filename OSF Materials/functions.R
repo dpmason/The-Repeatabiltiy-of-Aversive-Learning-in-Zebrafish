@@ -89,6 +89,7 @@ add_day <- function(x) { #adding day column
                                 grepl("2019-06-25", date) ~ "1",
                                 grepl("2019-06-26", date) ~ "3",
                                 grepl("2019-06-27", date) ~ "3",
+                                grepl("0027-06-19", date) ~ "3", #accommodate error in day 4 not converting to day
                                 grepl("2019-07-01", date) ~ "8",
                                 grepl("2019-07-02", date) ~ "8",
                                 grepl("2019-07-03", date) ~ "10",

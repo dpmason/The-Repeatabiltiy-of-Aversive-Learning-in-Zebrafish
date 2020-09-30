@@ -117,7 +117,7 @@ exp1_reduced %<>% add_zone %>% add_exp %>% add_expgroup %>% add_learning3 %>% ad
 ```
 
 #Import Exp 2
-```{r importing experiment 2}
+```{r importing experiment 2, warning = F}
 ##importing raw data forexperiment 2
 path <- paste0("./data/Experiment 2 Raw Data/Day", 1:8, "/")
 
@@ -127,7 +127,7 @@ e2_data <- map(unlist(all_path), import_csv) %>% bind_rows() %>% as_tibble() %>%
 ```
 
 ##Import Siza Data Exp 2
-```{r size data exp 2}
+```{r size data exp 2, warning = F}
 ##importing size data for experiment 2
 jointed2 <- read.csv("./Data/Experiment 2 Size and ID Data/e2_fishID_size.csv")
 
@@ -159,15 +159,16 @@ add_variables(exp2_size) -> exp2
 add_variables(exp2_size_reduced) -> exp2_reduced 
 ```
 
-#Tidying Data
 ##Tidying Both Exps
-```{r selecting & renaming}
+```{r selecting & renaming, warning = F}
 ##selecting which columns to keep and renaming so both experimental data frames have the same variables
 select_rename <- function(x) {
   x %>% select(tank.x, mark.x, updatedsex, fishID, fish_length, fish_width, test, filepath, day, BASELINE, PROBE, difference, fish_size, zone, exp, exp_group, learning, set) %>% rename(tank = tank.x, mark = mark.x, sex = updatedsex) -> x
 }
 
 select_rename(exp1) -> e1_selected
+
+e1_selected <- e1_selected[-1529,] #removes additional observation of NAs that select rename function creates
 
 select_rename(exp1_reduced) -> e1_selected_reduced
 
@@ -240,7 +241,7 @@ full_join(e1, e2) -> allexp
 full_join(e1_reduced, e2_reduced) -> allexp_reduced
 ```
 
-#Creating Meansurement Sets
+#Creating Measurement Sets
 ```{r making measurement sets for single conditions}
 ## filtering single conditions GREBLU and BLUGRE in groups when they were measured
 allgbbg %>% filter(set %in% c("firstg","firstb")) -> first
@@ -337,6 +338,7 @@ filter_sex <- function(df, x = "", y = "") {
 }
 
 filter_sex(e1, x = "e1_male", y = "e1_female")
+filter_sex(e2, x = "e2_male", y = "e2_female")
 filter_sex(allgb, x = "allgb_male", y = "allgb_female")
 filter_sex(allbg, x = "allbg_male", y = "allbg_female")
 filter_sex(first, x = "first_male", y = "first_female")

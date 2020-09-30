@@ -548,9 +548,9 @@ save(e1_data, e1, e2, e1_male, e1_female,
 
 #Data Check
 ```{r}
-# map_dbl(e1, n_distinct)
+map_dbl(e1, n_distinct)
 # 
-# map_dbl(e2, n_distinct)
+map_dbl(e2, n_distinct)
 ```
 
 

@@ -208,6 +208,76 @@ Figure_2 <- ggarrange(fig2A, fig2B,
 Figure_2
 ```
 
+##Figure 2.1
+```{r, Results Figure 2}
+#FIGURE IN PROGRESS
+##mean lines are wrong
+pref_cols <- c("Grey" = "#999999","Green" = "#009E73", "Red" = "#D55E00", "Orange" = "#E69F00")
+
+sex_cols1 <- c("male" = "#CC79A7", "female" = "#56B4E9")
+
+bothexp %<>% mutate(experiment = case_when (grepl("Experiment 1", filepath) ~ "Experiment 1",
+                                            grepl("MOBASELINE", filepath) ~ "Experiment 1",
+                                           grepl("Experiment 2", filepath) ~ "Experiment 2"))
+
+bothexp$expsex <- as.factor(paste(bothexp$experiment, bothexp$sex, sep = " "))
+
+fig2A.1 <- e1 %>% 
+  ggplot(aes(sex, difference,  col = sex)) + 
+  geom_hline(yintercept = 0, linetype = "dashed", colour = "grey40", size = 0.5) +
+  geom_hline(yintercept = 2.9454, colour = "#CC79A7", size = 1.5) +
+  geom_hline(yintercept = 6.0191, colour = "#56B4E9", size = 1.5) +
+  geom_quasirandom(dodge.width = 0.6, alpha = 0.5) + 
+  theme(
+    legend.position = c(.95, .95),
+    legend.justification = c("right", "top"),
+    legend.box.just = "right",
+    legend.margin = margin(6, 6, 6, 6)) +
+  labs(col = "Sex") +
+  labs(x = "Sex", y = "Association Response", title = "Aversive Learning in Experiment 1") +
+  scale_color_manual(values = sex_cols1) +
+  theme(legend.key = element_rect(fill = "white", colour = "grey90")) +
+  ylim(-22,41) +
+  theme(axis.text.x = element_text(size = 11))
+
+fig2B.1 <- e2 %>% 
+  ggplot(aes(sex, difference,  col = sex)) + 
+  geom_hline(yintercept = 0, linetype = "dashed", colour = "grey40", size = 0.5) +
+  geom_hline(yintercept = 6.88287, colour = "#CC79A7", size = 1.5) +
+  geom_hline(yintercept = 7.5871, colour = "#56B4E9", size = 1.5) +
+  geom_quasirandom(dodge.width = 0.6, alpha = 0.5) + 
+  theme(
+    legend.position = c(.95, .95),
+    legend.justification = c("right", "top"),
+    legend.box.just = "right",
+    legend.margin = margin(6, 6, 6, 6)) +
+  labs(col = "Sex") +
+  labs(x = "Sex", y = "Association Response", title = "Aversive Learning in Experiment 2") +
+  scale_color_manual(values = sex_cols1) +
+  theme(legend.key = element_rect(fill = "white", colour = "grey90")) +
+  ylim(-22,41) +
+  theme(axis.text.x = element_text(size = 11))
+
+fig2C.1 <- col_pref %>% 
+  ggplot(aes(stim, pref, col = stim)) + 
+  geom_hline(yintercept = 30, linetype = "dashed", colour = "grey40", size = 0.5) +
+  geom_quasirandom(dodge.width = 0.4, alpha = 0.5) +
+  scale_color_manual(values = pref_cols) +
+  labs(x = "Colour", y = "Relative Colour Preference", title = "Colour Preference During the Baseline Period in Experiment 1") +
+  theme(legend.position = "none") +
+  scale_x_discrete(name = "Stimulus",labels = c("Grey\nCheck", "Green\nBlue", "Red\nYellow", "Orange\nMagenta")) +
+  theme(axis.text.x = element_text(size = 11))
+
+Figure_2.1 <- ggarrange(fig2C.1,
+                        ggarrange(fig2A.1, fig2B.1, ncol = 2, labels = c("B", "C")),
+                        nrow = 2,
+                        labels = "A"
+)
+
+Figure_2.1
+```
+
+
 ##Figure 3
 ```{r, Results Figure 3}
 ##forest plot showing r estimate and 95% CI, conditions grouped according to CS+
@@ -256,6 +326,28 @@ Figure_3
 rpt_outputs_all$conditions <- gsub("\\_M", " M", rpt_outputs_all$conditions)
 rpt_outputs_all$conditions <- gsub("\\_F", " F", rpt_outputs_all$conditions)
 rpt_outputs_all$conditions <- gsub("\\_", " ", rpt_outputs_all$conditions)
+
+rpt_outputs_all[1, 1] <- "Across"
+rpt_outputs_all[2, 1] <- "Green/Blue"
+rpt_outputs_all[3, 1] <- "Blue/Green"
+rpt_outputs_all[4, 1] <- "First"
+rpt_outputs_all[5, 1] <- "Second"
+rpt_outputs_all[6, 1] <- "Third"
+rpt_outputs_all[7, 1] <- "All"
+rpt_outputs_all[8, 1] <- "Across Male"
+rpt_outputs_all[9, 1] <- "Across Female"
+rpt_outputs_all[10, 1] <- "Green/Blue Male"
+rpt_outputs_all[11, 1] <- "Green/Blue Female"
+rpt_outputs_all[12, 1] <- "Blue/Green Male"
+rpt_outputs_all[13, 1] <- "Blue/Green Female"
+rpt_outputs_all[14, 1] <- "First Male"
+rpt_outputs_all[15, 1] <- "First Female"
+rpt_outputs_all[16, 1] <- "Second Male"
+rpt_outputs_all[17, 1] <- "Second Female"
+rpt_outputs_all[18, 1] <- "Third Male"
+rpt_outputs_all[19, 1] <- "Third Female"
+rpt_outputs_all[20, 1] <- "All Male"
+rpt_outputs_all[21, 1] <- "All Female"
 
 rpt_outputs_all %<>% mutate(Sex = case_when (grepl("Male", conditions) ~ "Male",
                                              grepl("Female", conditions) ~ "Female",
@@ -361,4 +453,9 @@ Figure_S6 <- ggarrange(p1, p2, p2, p4, p5, p6, p7, p8,
                     ncol = 2, nrow = 4)
 
 Figure_S6
+```
+
+## Supplementary Figure 7
+```{r}
+
 ```

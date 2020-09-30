@@ -310,6 +310,7 @@ e2 %>%
   geom_quasirandom(dodge.width = 0.1, alpha = 0.5) +
   theme(legend.position = "none")
 ```
+
 #Supplmentary Figures
 ##Supplementary Figure 6
 ```{r}

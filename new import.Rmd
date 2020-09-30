@@ -1,0 +1,110 @@
+---
+title: "new import"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+#install.packages("pacman")
+pacman::p_load(tidyverse, ggbeeswarm, rptR, lme4, magrittr)
+
+# load functions
+source("functions.R") #access to functions in different R script
+```
+
+#Import Exp 1
+```{r importing experiment 1, warning=FALSE}
+## importing csv's & transforming data
+path <- paste0("./Data/Experiment 1 Raw Data/Day", 1:16, "/") #creates a section of the raw data filepaths
+
+all_path <- map(path,  ~list.files(path = .)[str_detect(list.files(path = .), ".csv")] ) %>% map2(.,path,~ paste0(.y, .x)) #creates a list of the complete raw data filepaths
+
+e1_data <- map(unlist(all_path), import_csv) %>% #uses import_csv function from the source script functions.R to modify the raw data into R suitable structure
+  bind_rows() %>% as_tibble() %>% #makes the data frame a tibble
+  group_by(filepath, date, marking, type, test, unit, variable, arena) %>% #groups columns for summarising
+  summarise(total = sum(number)) %>% #summarises time spent
+  filter(variable == "ZONE_TIMERS") %>% #filters the necessary measurement "ZONE TIMERS"
+  group_by(type, marking, test, unit, filepath, date) %>%
+  summarise(sum_time = sum(total), arena = unique(arena)) %>% 
+  arrange(filepath, marking, type, test) %>% #arranges variables in desirable order
+  mutate(time_min = if_else(type == "BASELINE", sum_time/5, sum_time/1)) %>% #standardises BASELINE and PROBE to per minute
+  add_day %>% add_exp %>% add_zone %>% add_tod %>% add_learning %>% add_expgroup %>% #adding variables
+  mutate(day = as.numeric(day)) #changes day variable to numeric 
+```
+
+##Filtering appropriate time periods 
+```{r, Reduce data to what we want to analyse}
+##filters dfs for wanted BASELINE and PROBE times and creates difference (response variable)
+new_missing %>% 
+  filter(unit %in% c("UNIT1", "UNIT2", "UNIT3", "UNIT4", "UNIT5", "UNIT6", "PROBE1", "PROBE2")) %>% #gets data for all 30 minutes of BASELINE and first two minutes of PROBE
+  group_by(type, marking, test, day) %>%
+  summarise(time = mean(time_min), arena = unique(arena)) %>% add_diff -> missing_filter 
+
+missing_filter %<>% mutate(filepath = fp) #gets time spent in BASELINE - PROBE
+
+e1_data %>% filter(unit %in% c("UNIT1", "UNIT2", "UNIT3", "UNIT4", "UNIT5", "UNIT6", "PROBE1", "PROBE2")) %>%
+  group_by(type, marking, test, filepath, day) %>%
+  summarise(time = mean(time_min), arena = unique(arena)) %>%
+  add_diff -> e1_filter
+```
+
+##Import Size Data Exp 1
+```{r Importing data for size variable}
+##adding in size data
+#fishIDs are not on the size csv, only markings - have to first match markings with fishIDs
+merge <- read.csv("./Data/Experiment 1 Size and ID Data/e1_tank_marking_fishID.csv") #putting experiment 1 fishID and marking data into a df
+size <- read.csv("./Data/Experiment 1 Size and ID Data/e1_size.csv") #putting experiment 1 size and marking data into a df
+
+merge %<>% mutate(tankmark = paste0(tank, mark)) #creating variable with tank and marking to match later in a join
+size %<>% mutate(tankmark = paste0(tank, mark)) 
+
+full_join(e1_filter, missing_filter) -> data_e1 #merging missing and experiment 1 data into one df
+full_join(e1_filter_reduced, missing_filter_reduced) -> data_e1_reduced_time #the same but for reduced baseline time
+
+data_e1 %<>% mutate(fishID = marking) #changes name of "marking" variable to "fishID"
+data_e1_reduced_time %<>% mutate(fishID = marking)
+
+left_join(merge, size, by = "tankmark") -> jointed #merges fishID/marking and size/marking dfs
+left_join(jointed, data_e1, by = "fishID") -> dat_merge #adds size data to df
+left_join(jointed, data_e1_reduced_time, by = "fishID") -> dat_merge_reduced
+
+dat_merge %>% mutate(fish_size = pi*((fish_length/2)*(fish_width/2))) -> exp1 #gets the ellipse area for the fish size
+dat_merge_reduced %>% mutate(fish_size = pi*((fish_length/2)*(fish_width/2))) -> exp1_reduced
+
+exp1 %<>% add_zone %>% add_exp %>% add_expgroup %>% add_learning3 %>% add_set #adds necessary variables
+exp1_reduced %<>% add_zone %>% add_exp %>% add_expgroup %>% add_learning3 %>% add_set
+```
+
+##Tidying
+```{r selecting & renaming, warning = F}
+##selecting which columns to keep and renaming so both experimental data frames have the same variables
+select_rename <- function(x) {
+  x %>% select(tank.x, mark.x, updatedsex, fishID, fish_length, fish_width, test, filepath, day, BASELINE, PROBE, difference, fish_size, zone, exp, exp_group, learning, set) %>% rename(tank = tank.x, mark = mark.x, sex = updatedsex) -> x
+}
+
+select_rename(exp1) -> e1_selected
+
+select_rename(exp1_reduced) -> e1_selected_reduced
+
+## removing non-CS value as its only a mirror of CS
+cs_only(e1_selected) -> e1
+cs_only(e1_selected_reduced) -> e1_reduced
+
+e1 %<>% add_tod() #adding time of day to DF
+
+#changing all character variables to factors in the DFs
+e1[sapply(e1, is.character)] <- lapply(e1[sapply(e1, is.character)], as.factor)
+```
+
+```{r}
+e1_selected %>% add_tod() -> e1_new #original DF before  it was filtered for only the CS
+```
+
+```{r}
+
+```

@@ -18,14 +18,38 @@ load("./Data/processed_data.Rdata")
 ```{r}
 ##basic model
 learn_model_e1 <- lmer(difference ~ scale(day) + sex + scale(fish_size) + learning + (1 | exp) + (1 | fishID), data = e1) #z-scaling, if you scale fish size you have to scale day as well
+
+summary(learn_model_e1) #experiment 1 93 levels
+
+learn_model_e1_male <- lmer(difference ~ scale(day) + scale(fish_size) + learning + (1 | exp) + (1 | fishID), data = e1_male)
+
+learn_model_e1_male 
+
+learn_model_e1_female <- lmer(difference ~ scale(day) + scale(fish_size) + learning + (1 | exp) + (1 | fishID), data = e1_female)
+
+learn_model_e1_female 
 ```
 
 ##Learning Exp2
 ```{r}
-learn_model_e2 <- lmer(difference ~ scale(day) + sex + scale(fish_size) + learning + exp + (1 | fishID), data = e2)
+learn_model_e2 <- lmer(difference ~ scale(day) + sex + scale(fish_size) + learning + (1 | exp) + (1 | fishID), data = e2)
+
+summary(learn_model_e2)
+
+learn_model_e2_male <- lmer(difference ~ scale(day) + scale(fish_size) + learning + (1 | exp) + (1 | fishID), data = e2_male)
+
+learn_model_e2_male 
+
+learn_model_e2_female <- lmer(difference ~ scale(day) + scale(fish_size) + learning + (1 | exp) + (1 | fishID), data = e2_female)
+
+learn_model_e2_female 
+
+str(e2)
+
+str(e1)
 ```
 
-# Repeatability Models   
+#Repeatability Models   
 ##Across Conditions Repeatabilties
 ```{r Exp 1 Analysis}
 #repeatability outputs for across 8 conditions
@@ -297,13 +321,78 @@ full_join(rpt_outputs, rpt_outputs_sex) -> rpt_outputs_all #repeatability output
 full_join(pref_outputs, pref_outputs_sex) -> pref_outputs_all
 ```
 
-# saving outputs
+# Saving Outputs
 ```{r}
 save.image("02_Run Models_Workspace.RData")
 ```
 
+#Contrast Analysis
+```{r}
+rpt_e1_male #1
 
-##Repeatabiltiy Tables
+rpt_e1_female #2
+
+#Analysis to find differences
+##Step 1: Unlist distributions from rptr models and examine histograms 
+rptr_male_boot <- unlist(rpt_e1_male$R_boot)
+hist(rptr_male_boot, breaks = 50)
+rptr_female_boot <- unlist(rpt_e1_female$R_boot)
+hist(rptr_female_boot, breaks = 50)
+
+#Step 2: Find the difference between bootstrap distributions and examine histogram
+
+rptr_diff <- rptr_male_boot - rptr_female_boot
+hist(rptr_diff, breaks = 50)
+
+#Step 3: Find mean of the new distribution (difference between rptr models)
+
+m3 <- mean(rptr_diff)
+m3
+
+#Step 4: Find quantiles at 0.025 and 0.975 (these two become your lower bound and upper bound 95% CI)
+
+q <- quantile(rptr_diff, c(0.025, 0.975))
+q
+
+### males are higher, but not significantly different from females (because the 95% CI overlaps zero)
+
+# work out how to plot!
+
+###NEED TO CREATE A DF WITH CONTRASTS ANALYSES AND MERGE WITH RPT OUTPUTS ALL TO MAKE NEW SUPP PLOT###
+###COULD TAKE OUT VARIABLES ALREADY SHOWN IN RESULTS###
+```
+
+##Plot Contrast Analysis
+```{r}
+df_contrast_learn <- tibble(
+  Condition = c("Male", "Female", "Contrast"),
+  r = c(e1_male$R$fishID,e1_female$R$fishID, m3),
+  ci.lb = c(e1_male$CI_emp$`2.5%`,e1_female$CI_emp$`2.5%`,-0.01),
+  ci.ub = c(e1_male$CI_emp$`97.5%`,e1_female$CI_emp$`97.5%`, 0.38),
+Endpoint = c("Total distance", "Total distance", "Total distance"))
+
+df_contrast_learn
+```
+```{r}
+plot_Tot_Dist_rptr <- ggplot(Tot_Dist_rptr, aes(x=Condition, y=r, colour=Condition)) +
+  geom_errorbar(aes(ymin=ci.lb, ymax=ci.ub), width = 0, position = position_dodge(0.3), size=1.1) +
+  geom_point(aes(x = Condition, y = r), position = position_dodge(0.3),size=3)+
+  scale_color_manual(values=c("#000000", "#339900", "#FF9900"))+
+  geom_hline(yintercept = 0, lty = "dotted") +
+  labs(y = "r") +
+  labs(title = "Repeatability estimates", subtitle = "Total distance")+
+  coord_flip()+
+   theme(axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank())+
+  ylim(-0.2, 0.8) +
+  theme(axis.title.x = element_blank(),
+        axis.text.x = element_blank())+
+  theme(legend.position="top")
+plot_Tot_Dist_rptr
+```
+
+#Repeatability Tables
 ```{r}
 # write.table(rpt_outputs, file = "rpt_outputs_table.csv", sep = ",", row.names = FALSE) #exports table to project file
 # 
@@ -316,6 +405,41 @@ save.image("02_Run Models_Workspace.RData")
 # write.table(pref_outputs_sex, file = "pref_outputs_sex_table.csv", sep = ",", row.names = FALSE)
 # 
 # write.table(pref_outputs_all, file = "pref_outputs_all_table.csv", sep = ",", row.names = FALSE)
+```
+
+#Checking Inconsistency in model fishID levels
+```{r}
+e1 -> test_e1
+e1_new -> test_e1_new
+group_1 -> test_group_1
+group_2 -> test_group_2
+group_3 -> test_group_3
+group_4 -> test_group_4
+
+fctr_chk <- function(DF) {
+DF[sapply(DF, is.character)] <- lapply(DF[sapply(DF, is.character)], 
+                                       as.factor)
+str(DF)
+}
+
+#all models originate from experiment one and should have same amount of fishID levels
+#cs_only function is the difference, without it, e1_new has 1 more level
+#groups come from e1_new and lose 2 to 3 levels
+
+#some fish don't have fish size data
+
+sum(is.na(e1_new))
+sum(is.na(e1))
+sum(is.na(e1_new$day))
+sum(is.na(e1$day))
+
+
+fctr_chk(test_e1_new) #100 levels
+fctr_chk(test_e1) #99 levels
+fctr_chk(test_group_1) #98 levels
+fctr_chk(test_group_2) #97 levels
+fctr_chk(test_group_3) #97 levels
+fctr_chk(test_group_4) #98 levels
 ```
 
 #Clear Environment
