@@ -564,7 +564,7 @@ Figure_S6 <- ggarrange(p1, p2, p2, p4, p5, p6, p7, p8,
 Figure_S6
 ```
 
-##Supplementary Fiure 5
+##Supplementary Figure 5
 ```{r}
 e1_sum %>% group_by(unit) %>% 
   summarise(mean=mean(mean), sd=sd(sd), se=sd(se)/sqrt(n())) -> e1_sum_all

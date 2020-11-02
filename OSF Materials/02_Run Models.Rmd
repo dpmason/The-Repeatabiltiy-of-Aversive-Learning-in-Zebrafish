@@ -20,6 +20,7 @@ load("./Data/processed_data.Rdata")
 learn_model_e1 <- lmer(difference ~ scale(day) + sex + scale(fish_size) + learning + (1 | exp) + (1 | fishID), data = e1) #z-scaling, if you scale fish size you have to scale day as well
 
 summary(learn_model_e1) #experiment 1 93 levels
+tab_model(learn_model_e1) #to print out model results for extraction
 
 learn_model_e1_male <- lmer(difference ~ scale(day) + scale(fish_size) + learning + (1 | exp) + (1 | fishID), data = e1_male)
 
@@ -35,6 +36,7 @@ learn_model_e1_female
 learn_model_e2 <- lmer(difference ~ scale(day) + sex + scale(fish_size) + learning + (1 | exp) + (1 | fishID), data = e2)
 
 summary(learn_model_e2)
+tab_model(learn_model_e2)
 
 learn_model_e2_male <- lmer(difference ~ scale(day) + scale(fish_size) + learning + (1 | exp) + (1 | fishID), data = e2_male)
 
@@ -334,24 +336,24 @@ rpt_e1_female #2
 
 #Analysis to find differences
 ##Step 1: Unlist distributions from rptr models and examine histograms 
-rptr_male_boot <- unlist(rpt_e1_male$R_boot)
-hist(rptr_male_boot, breaks = 50)
-rptr_female_boot <- unlist(rpt_e1_female$R_boot)
-hist(rptr_female_boot, breaks = 50)
+rptr_male_boot_e1 <- unlist(rpt_e1_male$R_boot)
+hist(rptr_male_boot_e1, breaks = 50)
+rptr_female_boot_e1 <- unlist(rpt_e1_female$R_boot)
+hist(rptr_female_boot_e1, breaks = 50)
 
 #Step 2: Find the difference between bootstrap distributions and examine histogram
 
-rptr_diff <- rptr_male_boot - rptr_female_boot
-hist(rptr_diff, breaks = 50)
+rptr_diff_e1 <- rptr_male_boot_e1 - rptr_female_boot_e1
+hist(rptr_diff_e1, breaks = 50)
 
 #Step 3: Find mean of the new distribution (difference between rptr models)
 
-m3 <- mean(rptr_diff)
+m3 <- mean(rptr_diff_e1)
 m3
 
 #Step 4: Find quantiles at 0.025 and 0.975 (these two become your lower bound and upper bound 95% CI)
 
-q <- quantile(rptr_diff, c(0.025, 0.975))
+q <- quantile(rptr_diff_e1, c(0.025, 0.975))
 q
 
 ### males are higher, but not significantly different from females (because the 95% CI overlaps zero)
@@ -365,15 +367,17 @@ q
 ##Plot Contrast Analysis
 ```{r}
 df_contrast_learn <- tibble(
-  Condition = c("Male", "Female", "Contrast"),
-  r = c(e1_male$R$fishID,e1_female$R$fishID, m3),
-  ci.lb = c(e1_male$CI_emp$`2.5%`,e1_female$CI_emp$`2.5%`,-0.01),
-  ci.ub = c(e1_male$CI_emp$`97.5%`,e1_female$CI_emp$`97.5%`, 0.38),
-Endpoint = c("Total distance", "Total distance", "Total distance"))
+  Distribution = c("Male", "Female", "Contrast"),
+  R = c(rpt_e1_male[["R"]][["fishID"]], rpt_e1_female[["R"]][["fishID"]], m3),
+  lowCI = c(rpt_e1_male[["CI_emp"]][["2.5%"]], rpt_e1_female[["CI_emp"]][["2.5%"]], -0.0243),
+  highCI = c(rpt_e1_male[["CI_emp"]][["97.5%"]] , rpt_e1_female[["CI_emp"]][["97.5%"]], 0.1325),
+  Sex = c("Male", "Female", "Mixed"))
 
 df_contrast_learn
 ```
-```{r}
+
+
+```{r, Hamza's Example}
 plot_Tot_Dist_rptr <- ggplot(Tot_Dist_rptr, aes(x=Condition, y=r, colour=Condition)) +
   geom_errorbar(aes(ymin=ci.lb, ymax=ci.ub), width = 0, position = position_dodge(0.3), size=1.1) +
   geom_point(aes(x = Condition, y = r), position = position_dodge(0.3),size=3)+

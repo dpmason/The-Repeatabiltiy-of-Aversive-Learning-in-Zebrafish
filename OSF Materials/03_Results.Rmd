@@ -386,9 +386,23 @@ Figure_S3 <- ggplot(data = rpt_outputs_all, aes(x = conditions, y = R, colour = 
 
 Figure_S3
 ```
+Supplementary Figure 4
+```{r, Constrast Analysis Plot}
+sex_cols <- c("Female" = "#CC79A7","Male" = "#56B4E9", "Mixed" = "#999999")
 
+Figure_S4 <- ggplot(data = df_contrast_learn, aes(x = Distribution, y = R, colour = Sex)) +
+  geom_errorbar(aes(ymin = lowCI, ymax = highCI), width = 0.1, position = position_dodge(0.3), size = 1) +
+  geom_point(aes(x = Distribution, y = R), position = position_dodge(0.3), size = 3) +
+  geom_hline(yintercept = 0, lty = "dotted") +
+  labs(x = "Distribution", y = "Repeatability (R)") +
+  scale_colour_manual(values = sex_cols) +
+  theme(legend.position="none") +
+  coord_flip()
 
-## Supplemetary Figure 4   
+Figure_S4
+```
+
+## Supplenmetary Figure 5  
 ```{r}
 volt_data %>% filter(test == "CHECK") %>% group_by(test, voltage) %>% summarise(mean = mean(difference), sd = sd(difference), se = sd(difference)/sqrt(n())) -> volt_sum
 
@@ -401,7 +415,7 @@ Figure_S4 <- ggplot(volt_sum, aes(voltage, mean)) +
 ```
 
 
-## Supplementary Figure 5
+## Supplementary Figure 6
 ```{r}
 e1_data %>% filter(zone == "CS") %>% group_by(exp, unit) %>% 
   summarise(mean=mean(time_min), sd=sd(time_min), se=sd(time_min)/sqrt(n())) -> e1_sum
@@ -422,7 +436,7 @@ probe_draw_all <- function(dat, title = "") {
 probe_draw_all(e1_sum_all, title =  "All Conditions") -> Figure_S5
 ```
 
-## Supplementary Figure 6
+## Supplementary Figure 7
 ```{r}
 e1_data %>% filter(zone == "CS") %>% group_by(exp, unit) %>% 
   summarise(mean=mean(time_min), sd=sd(time_min), se=sd(time_min)/sqrt(n())) -> e1_sum
