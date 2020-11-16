@@ -139,70 +139,99 @@ top_panel <- plot_grid(title, A, ncol = 1, rel_heights = c(0.1,1))
 female.colour = "#730091"
 male.colour = "#088701"
 
-e1 %>% group_by(sex) %>% summarise(mu = mean(difference/60),
-                                   sigma = sd(difference/60),
-                                   min = min(difference/60),
-                                   max = max(difference/60),
-                                   n = n(),
-                                   se = sigma/sqrt(n)) -> learn_stats1
-
-e2 %>% group_by(sex) %>% summarise(mu = mean(difference/60),
-                                   sigma = sd(difference/60),
-                                   min = min(difference/60),
-                                   max = max(difference/60),
-                                   n = n(),
-                                   se = sigma/sqrt(n)) -> learn_stats2
-
-range_learn_stats <- range(c(learn_stats1$min,
-                             learn_stats1$max,
-                             learn_stats2$min,
-                             learn_stats2$max))
-
-ggplot() + tm + 
-  geom_hline(yintercept = 0, linetype = "dashed", colour = "grey40", size = 0.5) +
-  geom_quasirandom(data = e1, aes(sex, difference/60, col = sex),
-                   dodge.width = 0.4, alpha = 0.5,
-                   show.legend = F) +
-  geom_errorbar(data = learn_stats1, aes(x = sex, 
-                                 group = sex,
-                                 ymin = mu - sigma,
-                                 ymax = mu + sigma),
-                width = 0.3,
-                size = 0.5) +
-    geom_point(data = learn_stats1, aes(x = sex, 
-                                 group = sex,
-                                 y = mu),
-               size = 3) +
-  scale_color_manual(values = c(female.colour, male.colour)) +
-  scale_y_continuous(breaks = seq(-1,1,0.1), lim = range_learn_stats) +
-  labs(x = "Colour", y = "proportional difference to baseline time", title = "across conditions", tag = "(B)") -> B
-
-
-
-ggplot() + tm + theme(axis.text.y = element_blank(),
-                      axis.title.y = element_blank(),
-                      axis.ticks.y = element_blank(),
-                      axis.line.y = element_blank()) +
-  geom_hline(yintercept = 0, linetype = "dashed", colour = "grey40", size = 0.5) +
-  geom_quasirandom(data = e2, aes(sex, difference/60, col = sex),
-                   dodge.width = 0.4, alpha = 0.5,
-                   show.legend = F) +
-  geom_errorbar(data = learn_stats2, aes(x = sex, 
-                                 group = sex,
-                                 ymin = mu - sigma,
-                                 ymax = mu + sigma),
-                width = 0.3,
-                size = 0.5) +
-    geom_point(data = learn_stats2, aes(x = sex, 
-                                 group = sex,
-                                 y = mu),
-               size = 3) +
-  scale_color_manual(values = c(female.colour, male.colour)) +
-  scale_y_continuous(breaks = seq(-1,1,0.1), lim = range_learn_stats) +
-  labs(x = "Colour", y = "proportional difference to baseline time", title = "within conditions", tag = "(C)") -> C
-
-bottom <- plot_grid(B, C, rel_widths = c(0.53,0.47))
+# e1 %>% group_by(sex) %>% summarise(mu = mean(difference/60),
+#                                    sigma = sd(difference/60),
+#                                    min = min(difference/60),
+#                                    max = max(difference/60),
+#                                    n = n(),
+#                                    se = sigma/sqrt(n)) -> learn_stats1
+# 
+# e2 %>% group_by(sex) %>% summarise(mu = mean(difference/60),
+#                                    sigma = sd(difference/60),
+#                                    min = min(difference/60),
+#                                    max = max(difference/60),
+#                                    n = n(),
+#                                    se = sigma/sqrt(n)) -> learn_stats2
+# 
+# range_learn_stats <- range(c(learn_stats1$min,
+#                              learn_stats1$max,
+#                              learn_stats2$min,
+#                              learn_stats2$max))
+# 
+# ggplot() + tm + 
+#   geom_hline(yintercept = 0, linetype = "dashed", colour = "grey40", size = 0.5) +
+#   geom_quasirandom(data = e1, aes(sex, difference/60, col = sex),
+#                    dodge.width = 0.4, alpha = 0.5,
+#                    show.legend = F) +
+#   geom_errorbar(data = learn_stats1, aes(x = sex, 
+#                                  group = sex,
+#                                  ymin = mu - sigma,
+#                                  ymax = mu + sigma),
+#                 width = 0.3,
+#                 size = 0.5) +
+#     geom_point(data = learn_stats1, aes(x = sex, 
+#                                  group = sex,
+#                                  y = mu),
+#                size = 3) +
+#   scale_color_manual(values = c(female.colour, male.colour)) +
+#   scale_y_continuous(breaks = seq(-1,1,0.1), lim = range_learn_stats) +
+#   labs(x = "Colour", y = "proportional difference to baseline time", title = "across conditions", tag = "(B)") -> B
+# 
+# 
+# 
+# ggplot() + tm + theme(axis.text.y = element_blank(),
+#                       axis.title.y = element_blank(),
+#                       axis.ticks.y = element_blank(),
+#                       axis.line.y = element_blank()) +
+#   geom_hline(yintercept = 0, linetype = "dashed", colour = "grey40", size = 0.5) +
+#   geom_quasirandom(data = e2, aes(sex, difference/60, col = sex),
+#                    dodge.width = 0.4, alpha = 0.5,
+#                    show.legend = F) +
+#   geom_errorbar(data = learn_stats2, aes(x = sex, 
+#                                  group = sex,
+#                                  ymin = mu - sigma,
+#                                  ymax = mu + sigma),
+#                 width = 0.3,
+#                 size = 0.5) +
+#     geom_point(data = learn_stats2, aes(x = sex, 
+#                                  group = sex,
+#                                  y = mu),
+#                size = 3) +
+#   scale_color_manual(values = c(female.colour, male.colour)) +
+#   scale_y_continuous(breaks = seq(-1,1,0.1), lim = range_learn_stats) +
+#   labs(x = "Colour", y = "proportional difference to baseline time", title = "within conditions", tag = "(C)") -> C
+# 
+# bottom <- plot_grid(B, C, rel_widths = c(0.53,0.47))
 bottom
+
+# putting across and within-conditions data together
+e_both <- rbind(e1[,c("sex", "difference")],
+                e2[,c("sex", "difference")])
+
+e_both %>% group_by(sex) %>% summarise(mu = mean(difference/60),
+                                   sigma = sd(difference/60),
+                                   min = min(difference/60),
+                                   max = max(difference/60),
+                                   n = n(),
+                                   se = sigma/sqrt(n)) -> learn_stats
+ggplot() + tm +
+  geom_hline(yintercept = 0, linetype = "dashed", colour = "grey40", size = 0.5) +
+  geom_quasirandom(data = e_both, aes(sex, difference/60, col = sex),
+                   dodge.width = 0.4, alpha = 0.5,
+                   show.legend = F) +
+  geom_errorbar(data = learn_stats, aes(x = sex,
+                                 group = sex,
+                                 ymin = mu - sigma,
+                                 ymax = mu + sigma),
+                width = 0.3,
+                size = 0.5) +
+    geom_point(data = learn_stats1, aes(x = sex,
+                                 group = sex,
+                                 y = mu),
+               size = 3) +
+  scale_color_manual(values = c(female.colour, male.colour)) +
+  scale_y_continuous(breaks = seq(-1,1,0.1), lim = range_learn_stats) +
+  labs(x = "Colour", y = "proportional difference to baseline time", tag = "(B)") -> bottom
 
 ggdraw(bottom) +
   draw_line(x = c(0.545, 0.545),
