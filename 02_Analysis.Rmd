@@ -22,16 +22,42 @@ learn_model_e1 <- lmer(difference ~ scale(day) + sex + scale(fish_size) + learni
 summary(learn_model_e1)
 
 tab_model(learn_model_e1) #output table with p-values and random effects
+
+
+test <- lmer(difference ~ scale(day) + sex + scale(fish_size) + learning + (1 | exp) + (1 | fishID), data = e2)
+summary(test)
+
+test1 <- lmer(difference ~ scale(day) + scale(fish_size) + learning + (1 | exp) + (1 | fishID), data = e2)
+summary(test1)
+
 ```
 
 ##Learning Exp2
 ```{r}
-learn_model_e2 <- lmer(difference ~ scale(day) + sex + scale(fish_size) + learning + exp + (1 | fishID), data = e2)
+learn_model_e2_new <- lmer(difference ~ scale(day) + sex + scale(fish_size) + learning + (1 |exp) + (1 | fishID), data = e2_only)
 
-summary(learn_model_e2)
+summary(learn_model_e2_new)
 
-tab_model(learn_model_e2)
+tab_model(learn_model_e2_new)
 ```
+#Learning Within Conditions combined
+```{r}
+#within conditions
+learn_model_within_combined <- lmer(difference ~ scale(day) + sex + scale(fish_size) + learning + (1|exp) + (1 | fishID), data = allgbbg)
+summary(learn_model_within_combined)
+
+test <- lmer(difference ~ scale(day) + sex + scale(fish_size) + (1 | fishID), data = allgbbg)
+summary(test)
+
+#across and within conditions
+learn_model_both_combined <- lmer(difference ~  sex  - 1+ scale(day) + scale(fish_size) + learning_combined + (1 | exp) + (1 | fishID), data = allgbbg)
+summary(learn_model_both_combined)
+
+learn_model_both_combined <- lmer(difference ~  sex  + scale(day) + scale(fish_size) + learning_combined + (1 | exp) + (1 | fishID), data = allgbbg)
+summary(learn_model_both_combined)
+
+```
+
 
 ##Check Assumptions
 ```{r}
