@@ -274,6 +274,11 @@ ggsave(filename = "./Figures/Figure 2.pdf",
        device = cairo_pdf)
 ```
 
+```{r}
+
+```
+
+
 
 ##Figure 3
 ```{r, Results Figure 3}

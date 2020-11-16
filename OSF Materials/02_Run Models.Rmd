@@ -17,10 +17,13 @@ load("./Data/processed_data.Rdata")
 ##Learning Exp1
 ```{r}
 ##basic model
-learn_model_e1 <- lmer(difference ~ scale(day) + sex + scale(fish_size) + learning + (1 | exp) + (1 | fishID), data = e1) #z-scaling, if you scale fish size you have to scale day as well
+learn_model_e1 <- lmer(difference ~ scale(day) + sex + scale(fish_size) + learning + (1 | exp) + (1 | fishID), data = across_cond) #z-scaling, if you scale fish size you have to scale day as well
 
 summary(learn_model_e1) #experiment 1 93 levels
 tab_model(learn_model_e1) #to print out model results for extraction
+
+learn_model_combined <- lmer(difference ~ scale(day) + sex + scale(fish_size) + learning_combined + (1 | exp) + (1 | fishID), data = allgbbg)
+summary(learn_model_combined)
 
 learn_model_e1_male <- lmer(difference ~ scale(day) + scale(fish_size) + learning + (1 | exp) + (1 | fishID), data = e1_male)
 
@@ -33,10 +36,14 @@ learn_model_e1_female
 
 ##Learning Exp2
 ```{r}
-learn_model_e2 <- lmer(difference ~ scale(day) + sex + scale(fish_size) + learning + (1 | exp) + (1 | fishID), data = e2)
+learn_model_e2 <- lmer(difference ~ scale(day) + sex + scale(fish_size) + learning + (1 | exp) + (1 | fishID), data = within_cond)
 
 summary(learn_model_e2)
 tab_model(learn_model_e2)
+
+learn_model_e2_old <- lmer(difference ~ scale(day) + sex + scale(fish_size) + learning + (1 | exp) + (1 | fishID), data = e2)
+
+summary(learn_model_e2_old)
 
 learn_model_e2_male <- lmer(difference ~ scale(day) + scale(fish_size) + learning + (1 | exp) + (1 | fishID), data = e2_male)
 
@@ -78,10 +85,11 @@ x
 
 ###R Across Con
 ```{r}
-rpt_sex(e1, y = "rpt_e1") #across conditions rpt model
+rpt_sex(across_cond, y = "rpt_e1") #across conditions rpt model
 rpt_nosex(e1_male, y = "rpt_e1_male") #males only
 rpt_nosex(e1_female, y = "rpt_e1_female") #females only
 ```
+
 
 ##Single Condition Repeatabilties
 ```{r repeatabilities in single condition}
@@ -97,11 +105,15 @@ rpt_nosex(allbg_female, y = "rpt_allbg_female")
 ###R Green/Blue
 ```{r}
 rpt_sex(allgb, y = "rpt_allgb") #all GREBLU
+
+rpt_allgb
 ```
 
 ###R Blue/Green
 ```{r}
 rpt_sex(allbg, y = "rpt_allbg") #all BLUGRE
+
+rpt_allbg
 ```
 
 ##Rpt Measurement Sets 
@@ -451,4 +463,11 @@ fctr_chk(test_group_4) #98 levels
 #rm(list = ls(all.names = TRUE))
 ```
 
+```{r}
+table(within_cond$fishID)
+table(within_cond$day)
+
+table(across_cond$fishID)
+table(across_cond$day)
+```
 

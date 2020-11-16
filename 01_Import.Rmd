@@ -336,9 +336,21 @@ exp2_reduced %>% select(-marking) -> e2_selected_reduced
 
 ## removing non-CS value as its only a mirror of CS
 cs_only(e1_selected) -> e1
-cs_only(e2_selected) -> e2
+cs_only(e2_selected) -> e2_only
 cs_only(e1_selected_reduced) -> e1_reduced
 cs_only(e2_selected_reduced) -> e2_reduced
+
+e1 %>% filter(exp %in% c("BLUGRE","GREBLU")) -> e1_within
+e1_within$tod <- NULL
+  
+full_join(e1_within, e2_only) -> within_cond
+
+within_cond -> e2
+
+e2 %>% filter(sex == "male") -> e2_male
+e2 %>% filter(sex == "female") -> e2_female
+
+e1 -> across_cond
 
 full_join(e1, e2) -> bothexp
 
@@ -390,6 +402,13 @@ full_join(e1bg_reduced, e2bg_reduced) -> allbg_reduced
 ##joining single conditions and whole experiments
 #joining GREBLU and BLUGRE assays
 full_join(allgb, allbg) -> allgbbg
+
+allgbbg %<>% mutate(learning_combined = case_when (grepl("initial", learning) ~ "initial",
+                                                  grepl("reverse", learning) ~ "reverse",
+                                                  grepl("second", learning) ~ "reverse",
+                                                  grepl("secondreverse", learning) ~ "reverse",
+                                                  grepl("third", learning) ~ "reverse",
+                                                  grepl("thirdreverse", learning) ~ "reverse"))
 
 full_join(allgb_reduced, allbg_reduced) -> allgbbg_reduced
 
