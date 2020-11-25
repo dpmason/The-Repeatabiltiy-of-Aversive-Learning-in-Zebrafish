@@ -405,7 +405,7 @@ volt_2 <- map(unlist(all_path), import_csv) %>% #uses import_csv function from t
 head(volt_2)
 ```
 
-#Import Day 3
+# Import Day 3
 ```{r}
 #Day 3 had a 6 minute probe phases
 path <- paste0("./Data/volttest/day", 3, "/") #creates a section of the raw data filepaths
@@ -426,7 +426,7 @@ volt_5 <- map(unlist(all_path), import_csv) %>% #uses import_csv function from t
 head(volt_5)
 ```
 
-#Joining Data Sets
+# Joining Data Sets
 ```{r}
 #can now join after importing separately due to different probe times
 volt_2 %>%

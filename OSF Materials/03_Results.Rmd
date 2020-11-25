@@ -35,24 +35,6 @@ rpt_allbg_male
 rpt_allbg_female
 ```
 
-# Results text 
-
-## Do Zebrafish Show Appropriate Responses in an Aversive Learning Assay?
-Zebrafish spent more time avoiding the CS+ following conditioning, showing evidence of learning (`r round(learn_mod$Estimate[learn_mod$coef_name == "(Intercept)"],2)` seconds, SE = `r round(learn_mod$Std..Error[learn_mod$coef_name == "(Intercept)"],3)`, t~`r learn_mod$df[learn_mod$coef_name == "(Intercept)"]`~ = `r round(learn_mod$t.value[learn_mod$coef_name == "(Intercept)"],3)`, P = `r round(learn_mod$Pr...t..[learn_mod$coef_name == "(Intercept)"],3)`). Males avoided the CS+ significantly more than females (`r round(learn_mod$Estimate[learn_mod$coef_name == "sexmale"],3)` seconds, SE = `r round(learn_mod$Std..Error[learn_mod$coef_name == "sexmale"],3)`, t~`r learn_mod$df[learn_mod$coef_name == "sexmale"]`~ = `r round(learn_mod$t.value[learn_mod$coef_name == "sexmale"],3)`, P = `r round(learn_mod$Pr...t..[learn_mod$coef_name == "sexmale"],3)`; Figure 2A), indicating males displayed a stronger learned association response. All other fixed effects did not significantly impact learning (see Supplementary Table 1 for all model outputs).
-
-## Do Zebrafish Display Colour Preferences and is Preference Repeatable?
-Zebrafish showed strong relative colour preference in all four conditions (see Figure 2B). In addition, fish exhibited repeatable relative colour preferences which were highly consistent across all four conditions (Figure 3A; Grey: R = `r grey_pref$R`, 95% CI [`r grey_pref$CI_emp[1]` - `r grey_pref$CI_emp[2]`]; Green: R = `r green_pref$R`, 95% CI [`r green_pref$CI_emp[1]` - 
-`r green_pref$CI_emp[2]`]; Red: R = `r red_pref$R`, 95% CI [`r red_pref$CI_emp[1]` - `r red_pref$CI_emp[2]`]; Orange: R = `r orange_pref$R`; 95% CI [`r orange_pref$CI_emp[1]` - `r orange_pref$CI_emp[2]`]; see Supplementary Table 2 and 3 for all repeatability estimates).
-
-## Is Aversive Learning Repeatable Across and Within Conditions?
-We found very low, albeit statistically significant, repeatability across the eight different conditions (i.e. Experiment 1; R = `r rpt_e1$R`, 95% CI [`r rpt_e1$CI_emp[1]` - `r rpt_e1$CI_emp[2]`], Figure 3B). In Experiment 2, we found low repeatability values within the two different conditions. The repeatability (point-estimate) of the ‘Green/Blue’ condition was even lower than the across-condition estimate (R = `r rpt_allgb$R`, 95% CI [`r rpt_allgb$CI_emp[1]` - `r rpt_allgb$CI_emp[2]`]). In the ‘Blue/Green’ condition, repeatability was higher than the former two estimates; nevertheless, this estimate remained low (R = `r rpt_allbg$R`, 95% CI [`r rpt_allbg$CI_emp[1]` - `r rpt_allbg$CI_emp[2]`]; see also Supplementary Figure 3 for male and female estimates).
-
-# Supplementary Notes   
-## Sex Differences in Repeatability   
-We found males we more generally more repeatable than females (Figure S3) in aversive learning. We found this result across conditions (males, sample size = `r rpt_e1_male$ngroups`, R = `r rpt_e1_male$R`, 95% CI [`r rpt_e1_male$CI_emp[1]` - `r rpt_e1_male$CI_emp[2]`]; females, sample size = `r rpt_e1_female$ngroups`, R = `r rpt_e1_female$R`, 95% CI [`r rpt_e1_female$CI_emp[1]` - `r rpt_e1_female$CI_emp[2]`]) and in the ‘Blue/Green’ condition (males, sample size = `r rpt_allbg_male$ngroups`, R = `r rpt_allbg_male$R`, 95% CI [`r rpt_allbg_male$CI_emp[1]` - `r rpt_allbg_male$CI_emp[2]`]; females, sample size = `r rpt_allbg_female$ngroups`, R = `r rpt_allbg_female$R`, 95% CI [`r rpt_allbg_female$CI_emp[1]` - `r rpt_allbg_female$CI_emp[2]`])). This result was not anticipated since females are reported to be more repeatable than males in behaviour (Bell et al., 2009).
-
-In relative colour preference, we found males were more repeatable than female in the colours red, grey and orange but not green. Since we are the first to assess the repeatability of colour preference in zebrafish, we cannot compare to the literature, however, the sex differences in colour preference repeatability are mostly consistent with those in the repeatability of aversive learning.
-
 # Supplementary Tables   
 
 ## Supplementary Table 1   
@@ -146,9 +128,8 @@ t3$`95% Confidence Interval`[pos] <- sapply(mod_list, function(x) paste0(round(x
 #write.csv(t3,file="SupplementaryTable3.csv",row.names=F,na="")
 ```
 
-
 # Figures   
-##Tidying Data for Figures
+## Tidying Data for Figures
 ```{r, Wrangling}
 rpt_outputs$conditions <- as.factor(rpt_outputs$conditions)
 
@@ -168,7 +149,208 @@ rpt_outputs$conditions = factor(rpt_outputs$conditions, levels = c("Across","Gre
 rpt_outputs %>% slice(1:3) -> new_outputs #remove measurement set data
 ```
 
-##Figure 2
+## Figure 2   
+```{r}
+# colours
+pref_cols <- c("Grey" = "#999999","Green" = "#009E73", "Red" = "#D55E00", "Orange" = "#E69F00")
+
+# ggplot theme
+tm <- theme(panel.background = element_blank(),
+            panel.grid = element_line(colour = "grey", size = 0.2),
+            axis.line = element_line(colour = "black"),
+            axis.ticks = element_line(colour = "black"),
+            axis.title.x = element_blank(),
+            axis.text.x = element_text(size = 11, colour = "black"),
+            axis.text.y = element_text(size = 9, colour = "black"),
+            axis.title.y = element_text(size = 11, vjust = 3),
+            plot.tag = element_text(size = 13, face = "bold"),
+            plot.title = element_text(size = 13, hjust = 0.5))
+
+col_pref$stim <- factor(col_pref$stim, levels = c("Grey", "Green", "Red", "Orange"))
+col_pref %>% group_by(stim) %>% summarise(mu = mean(pref/60),
+                                          sigma = sd(pref/60),
+                                          n = n(),
+                                          se = sigma/sqrt(n)) -> pref_stats
+
+  ggplot() + tm + 
+  geom_hline(yintercept = 0.5, linetype = "dashed", colour = "grey40", size = 0.5) +
+  geom_quasirandom(data = col_pref, aes(stim, pref/60, col = stim),
+                   dodge.width = 0.4, alpha = 0.5,
+                   show.legend = F) +
+  geom_errorbar(data = pref_stats, aes(x = stim, 
+                                 group = stim,
+                                 ymin = mu - sigma,
+                                 ymax = mu + sigma),
+                width = 0.3,
+                size = 0.5) +
+    geom_point(data = pref_stats, aes(x = stim, 
+                                 group = stim,
+                                 y = mu),
+               size = 3) +
+  scale_color_manual(values = pref_cols) +
+  scale_y_continuous(breaks = seq(0,1,0.1), lim = c(0,1)) +
+  labs(x = "Colour", y = "proportion of time spent in colour", title = "", tag = "(A)") +
+  scale_x_discrete(labels = c("Grey > Check", "Green > Blue", "Red > Yellow", "Orange > Magenta")) -> A
+  
+ 
+  title <- ggdraw() +
+  draw_label(
+    "Baseline Colour Preferences",
+    fontface = 'bold',
+    x = 0.5,
+    hjust = 0.5
+  ) +
+  theme(
+    # add margin on the left of the drawing canvas,
+    # so title is aligned with left edge of first plot
+    plot.margin = margin(0, 0, 0, 7)
+  )
+top_panel <- plot_grid(title, A, ncol = 1, rel_heights = c(0.1,1))
+  
+
+female.colour = "#730091"
+male.colour = "#088701"
+
+# e1 %>% group_by(sex) %>% summarise(mu = mean(difference/60),
+#                                    sigma = sd(difference/60),
+#                                    min = min(difference/60),
+#                                    max = max(difference/60),
+#                                    n = n(),
+#                                    se = sigma/sqrt(n)) -> learn_stats1
+# 
+# e2 %>% group_by(sex) %>% summarise(mu = mean(difference/60),
+#                                    sigma = sd(difference/60),
+#                                    min = min(difference/60),
+#                                    max = max(difference/60),
+#                                    n = n(),
+#                                    se = sigma/sqrt(n)) -> learn_stats2
+# 
+# range_learn_stats <- range(c(learn_stats1$min,
+#                              learn_stats1$max,
+#                              learn_stats2$min,
+#                              learn_stats2$max))
+# 
+# ggplot() + tm + 
+#   geom_hline(yintercept = 0, linetype = "dashed", colour = "grey40", size = 0.5) +
+#   geom_quasirandom(data = e1, aes(sex, difference/60, col = sex),
+#                    dodge.width = 0.4, alpha = 0.5,
+#                    show.legend = F) +
+#   geom_errorbar(data = learn_stats1, aes(x = sex, 
+#                                  group = sex,
+#                                  ymin = mu - sigma,
+#                                  ymax = mu + sigma),
+#                 width = 0.3,
+#                 size = 0.5) +
+#     geom_point(data = learn_stats1, aes(x = sex, 
+#                                  group = sex,
+#                                  y = mu),
+#                size = 3) +
+#   scale_color_manual(values = c(female.colour, male.colour)) +
+#   scale_y_continuous(breaks = seq(-1,1,0.1), lim = range_learn_stats) +
+#   labs(x = "Colour", y = "proportional difference to baseline time", title = "across conditions", tag = "(B)") -> B
+# 
+# 
+# 
+# ggplot() + tm + theme(axis.text.y = element_blank(),
+#                       axis.title.y = element_blank(),
+#                       axis.ticks.y = element_blank(),
+#                       axis.line.y = element_blank()) +
+#   geom_hline(yintercept = 0, linetype = "dashed", colour = "grey40", size = 0.5) +
+#   geom_quasirandom(data = e2, aes(sex, difference/60, col = sex),
+#                    dodge.width = 0.4, alpha = 0.5,
+#                    show.legend = F) +
+#   geom_errorbar(data = learn_stats2, aes(x = sex, 
+#                                  group = sex,
+#                                  ymin = mu - sigma,
+#                                  ymax = mu + sigma),
+#                 width = 0.3,
+#                 size = 0.5) +
+#     geom_point(data = learn_stats2, aes(x = sex, 
+#                                  group = sex,
+#                                  y = mu),
+#                size = 3) +
+#   scale_color_manual(values = c(female.colour, male.colour)) +
+#   scale_y_continuous(breaks = seq(-1,1,0.1), lim = range_learn_stats) +
+#   labs(x = "Colour", y = "proportional difference to baseline time", title = "within conditions", tag = "(C)") -> C
+# 
+# bottom <- plot_grid(B, C, rel_widths = c(0.53,0.47))
+#bottom
+
+# putting across and within-conditions data together
+e_both <- rbind(e1[,c("sex", "difference")],
+                e2[,c("sex", "difference")])
+
+e_both %>% group_by(sex) %>% summarise(mu = mean(difference/60),
+                                   sigma = sd(difference/60),
+                                   min = min(difference/60),
+                                   max = max(difference/60),
+                                   n = n(),
+                                   se = sigma/sqrt(n)) -> learn_stats
+
+range_learn_stats <- range(c(learn_stats$min,
+                             learn_stats$max))
+
+ggplot() + tm +
+  geom_hline(yintercept = 0, linetype = "dashed", colour = "grey40", size = 0.5) +
+  geom_quasirandom(data = e_both, aes(sex, difference/60, col = sex),
+                   dodge.width = 0.4, alpha = 0.5,
+                   show.legend = F) +
+  geom_errorbar(data = learn_stats, aes(x = sex,
+                                 group = sex,
+                                 ymin = mu - sigma,
+                                 ymax = mu + sigma),
+                width = 0.3,
+                size = 0.5) +
+    geom_point(data = learn_stats, aes(x = sex,
+                                 group = sex,
+                                 y = mu),
+               size = 3) +
+  scale_color_manual(values = c(female.colour, male.colour)) +
+  scale_y_continuous(breaks = seq(-1,1,0.1), lim = range_learn_stats) +
+  labs(x = "Colour", y = "proportional difference to baseline time", tag = "(B)") -> bottom
+
+ggdraw(bottom) +
+  draw_line(x = c(0.545, 0.545),
+    y = c(0.42, 0.85),
+    colour = "#ebebeb",
+    size = 6.5,
+    linejoin = "mitre",
+    arrow = arrow(type="closed")) +
+  draw_line(x = c(0.545, 0.545),
+    y = c(0.35, 0.1),
+    colour = "#ebebeb",
+    size = 6.5,
+    linejoin = "mitre",
+    arrow = arrow(type="closed")) +
+  draw_label("aversion", angle = 90, colour = "black", size = 11,
+             x = 0.544, y = 0.52) +
+  draw_label("preference", angle = 90, colour = "black", size = 11,
+             x = 0.544, y = 0.24) -> bottom_panel
+
+title <- ggdraw() +
+  draw_label(
+    "Aversive Learning",
+    fontface = 'bold',
+    x = 0.5,
+    hjust = 0.5
+  ) +
+  theme(
+    # add margin on the left of the drawing canvas,
+    # so title is aligned with left edge of first plot
+    plot.margin = margin(10, 0, 0, 7)
+  )
+
+bottom <- plot_grid(title, bottom_panel, ncol = 1, rel_heights = c(0.1,1))
+
+Fig2 <- plot_grid(top_panel, bottom, nrow = 2,
+                  rel_heights = c(0.48, 0.52))
+ggsave(filename = "./Figures/Figure 2.pdf",
+       plot = Fig2,
+       height = 8, width = 9,
+       device = cairo_pdf)
+```
+
+## Alternative Figure 2
 ```{r, Results Figure 2}
 pref_cols <- c("Grey" = "#999999","Green" = "#009E73", "Red" = "#D55E00", "Orange" = "#E69F00")
 
@@ -208,7 +390,7 @@ Figure_2 <- ggarrange(fig2A, fig2B,
 Figure_2
 ```
 
-##Figure 2.1
+## Alternative Figure 2.1
 ```{r, Results Figure 2}
 #FIGURE IN PROGRESS
 ##mean lines are wrong
@@ -276,9 +458,54 @@ Figure_2.1 <- ggarrange(fig2C.1,
 
 Figure_2.1
 ```
+## Figure 3    
+```{r}
+# colours
+pref_cols <- c("Grey" = "#999999","Green" = "#009E73", "Red" = "#D55E00", "Orange" = "#E69F00")
+new_cols <- c("Blue_Green" = "#56B4E9", "Green_Blue" = "#009E73", "Across" = "#000000")
+# ggplot theme
+tm <- theme(panel.background = element_blank(),
+            panel.grid = element_line(colour = "grey", size = 0.2),
+            axis.line = element_line(colour = "black"),
+            axis.ticks = element_line(colour = "black"),
+            axis.title.y = element_blank(),
+            axis.text.y = element_text(size = 11, colour = "black"),
+            axis.text.x = element_text(size = 9, colour = "black", margin = margin(0,0,0.1,0,"cm")),
+            axis.title.x = element_text(size = 10, face = "italic"),
+            plot.tag = element_text(size = 13, face = "bold"),
+            plot.title = element_text(size = 13, hjust = 0.5))
+
+# ordering factor to match colours
+pref_outputs$conditions <- factor(pref_outputs$conditions, levels = c("Grey", "Green", "Red", "Orange"))
+new_outputs$conditions <- factor(new_outputs$conditions, levels = c("Blue_Green", "Green_Blue", "Across"))
+
+ggplot(data = pref_outputs, aes(x = conditions, y = R, colour = conditions)) + tm +
+  geom_pointrange(aes(y = R, ymin = lowCI, ymax = highCI), size = 1, show.legend = F, fatten = 5) +
+  scale_x_discrete(labels = c("Grey > Check", "Green > Blue", "Red > Yellow", "Orange > Magenta")) +
+  scale_y_continuous(n.breaks = 6, expand = c(0,0), lim = c(0,max(pref_outputs$highCI))) +
+  labs(x = "Colour", y = "enhanced repeatability", title = "Repeatabiltiy of Colour Preference",
+       tag = "(A)") +
+  scale_color_manual(values = pref_cols) +
+  coord_flip() -> A
 
 
-##Figure 3
+ggplot(data = new_outputs, aes(x = conditions, y = R, colour = conditions)) + tm +
+  geom_pointrange(aes(y = R, ymin = lowCI, ymax = highCI), size = 1, show.legend = F, fatten = 5) +
+  scale_x_discrete(labels = c("Blue aversion (within pair)", "Green aversion (within pair)", "Across Pairs")) +
+  scale_y_continuous(n.breaks = 6, expand = c(0,0), lim = c(0,max(pref_outputs$highCI))) +
+  labs(x = "Colour", y = "enhanced repeatability", title = "Repeatabiltiy of Aversive Learning",
+       tag = "(B)") +
+  scale_color_manual(values = new_cols) +
+  coord_flip() -> B
+
+Fig3 <- plot_grid(A,B,nrow = 2)
+ggsave(filename = "./Figures/Figure 3.pdf",
+       plot = Fig3,
+       height = 6, width = 8,
+       device = cairo_pdf)
+```
+
+## Alternative Figure 3
 ```{r, Results Figure 3}
 ##forest plot showing r estimate and 95% CI, conditions grouped according to CS+
 new_cols <- c("Across" = "#000000","Green_Blue" = "#009E73", "Blue_Green" = "#56B4E9")
@@ -318,8 +545,32 @@ Figure_3 <- ggarrange(fig3A, fig3B,
 Figure_3
 ```
 
-# Supplementary Figures  
+# Secondary Visualisation
+## Exp and Sex differences
+```{r, Beeswarm plots of sex & exp in different conditions}
+#Across Conditions sex differences
+ggplot(e1, aes(sex, difference, color=sex)) + 
+  geom_quasirandom(dodge.width=0.4, alpha=0.7)
 
+#Across Conditions exp differences
+ggplot(e1, aes(sex, difference, color=sex)) + 
+  geom_quasirandom(dodge.width=0.4, alpha=0.7) +
+  facet_wrap(~exp)
+
+#Both Experiment sex differences
+ggplot(allexp, aes(sex, difference, color=sex)) + 
+  geom_quasirandom(dodge.width=0.4, alpha=0.7)
+
+#Green/Blue sex differences
+ggplot(allgb, aes(sex, difference, color=sex)) + 
+  geom_quasirandom(dodge.width=0.2, alpha=0.7)
+
+#Blue/Green sex differences
+ggplot(allbg, aes(sex, difference, color=sex)) + 
+  geom_quasirandom(dodge.width=0.2, alpha=0.7)
+```
+
+# Supplementary Figures  
 ## Supplementary Figure 3 
 ```{r forest plot with all conditions and sex groupings}
 #renaming values to be put in figures
@@ -368,7 +619,7 @@ rpt_outputs_all %<>% mutate(Sex = case_when (grepl("Male", conditions) ~ "Male",
 
 rpt_outputs_all[sapply(rpt_outputs_all, is.character)] <- lapply(rpt_outputs_all[sapply(rpt_outputs_all, is.character)], as.factor) #turning chr to factors
 
-sex_cols <- c("Female" = "#CC79A7","Male" = "#56B4E9", "Mixed" = "#999999")
+sex_cols <- c("Female" = "#730091","Male" = "#088701", "Mixed" = "#999999")
 
 rpt_outputs_all$CS = factor(rpt_outputs_all$CS, levels = c('All','Green','Blue','Both')) #ordering factors correctly for visualisation
 
@@ -386,9 +637,9 @@ Figure_S3 <- ggplot(data = rpt_outputs_all, aes(x = conditions, y = R, colour = 
 
 Figure_S3
 ```
-Supplementary Figure 4
+## Supplementary Figure 4
 ```{r, Constrast Analysis Plot}
-sex_cols <- c("Female" = "#CC79A7","Male" = "#56B4E9", "Mixed" = "#999999")
+sex_cols <- c("Female" = "#730091","Male" = "#088701", "Mixed" = "#999999")
 
 Figure_S4 <- ggplot(data = df_contrast_learn, aes(x = Distribution, y = R, colour = Sex)) +
   geom_errorbar(aes(ymin = lowCI, ymax = highCI), width = 0.1, position = position_dodge(0.3), size = 1) +
@@ -406,7 +657,7 @@ Figure_S4
 ```{r}
 volt_data %>% filter(test == "CHECK") %>% group_by(test, voltage) %>% summarise(mean = mean(difference), sd = sd(difference), se = sd(difference)/sqrt(n())) -> volt_sum
 
-Figure_S4 <- ggplot(volt_sum, aes(voltage, mean)) +
+Figure_S5 <- ggplot(volt_sum, aes(voltage, mean)) +
   geom_bar(position=position_dodge(), stat= "identity", width = 0.7, colour="black") +
   geom_errorbar(aes(ymin=mean - se, ymax = mean + se), width = 0.4, colour = "black", position=position_dodge(0.9)) +
   xlab("Unconditioned Stimulus Voltage") +
@@ -433,7 +684,7 @@ probe_draw_all <- function(dat, title = "") {
   print(gplot)
 }
 
-probe_draw_all(e1_sum_all, title =  "All Conditions") -> Figure_S5
+probe_draw_all(e1_sum_all, title =  "All Conditions") -> Figure_S6
 ```
 
 ## Supplementary Figure 7
@@ -463,13 +714,9 @@ probe_draw(e1_sum, condition = "ORAMAG", title = "Orange/Magenta Condition") -> 
 probe_draw(e1_sum, condition = "MAGORA", title = "Magenta/Orange Condition") -> p8
 
 
-Figure_S6 <- ggarrange(p1, p2, p2, p4, p5, p6, p7, p8,
+Figure_S7 <- ggarrange(p1, p2, p2, p4, p5, p6, p7, p8,
                     ncol = 2, nrow = 4)
 
-Figure_S6
+Figure_S7
 ```
 
-## Supplementary Figure 7
-```{r}
-
-```

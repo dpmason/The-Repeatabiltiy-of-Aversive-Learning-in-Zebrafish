@@ -39,6 +39,63 @@ x %>% mutate(day = case_when (grepl("2019-06-24", date) ~ "1",
                     grepl("2019-07-18", date) ~ "24"))
 }
 
+add_session <- function(x) {
+  x %<>% mutate(session = case_when (grepl("1 Raw Data/Day1/", filepath) ~ "1",
+                                     grepl("1 Raw Data/Day2/", filepath) ~ "1",
+                                     grepl("1 Raw Data/Day3/", filepath) ~ "2",
+                                     grepl("1 Raw Data/Day4/", filepath) ~ "2",
+                                     grepl("1 Raw Data/Day5/", filepath) ~ "3",
+                                     grepl("1 Raw Data/Day6/", filepath) ~ "3",
+                                     grepl("1 Raw Data/Day7/", filepath) ~ "4",
+                                     grepl("1 Raw Data/Day8/", filepath) ~ "4",
+                                     grepl("1 Raw Data/Day9/", filepath) ~ "5",
+                                     grepl("1 Raw Data/Day10/", filepath) ~ "5",
+                                     grepl("1 Raw Data/Day11/", filepath) ~ "6",
+                                     grepl("1 Raw Data/Day12/", filepath) ~ "6",
+                                     grepl("1 Raw Data/Day13/", filepath) ~ "7",
+                                     grepl("1 Raw Data/Day14/", filepath) ~ "7",
+                                     grepl("1 Raw Data/Day15/", filepath) ~ "8",
+                                     grepl("1 Raw Data/Day16/", filepath) ~ "8",
+                                     grepl("MOBASELINE-t1d-B4-PM", filepath) ~ "8",
+                                     grepl("2 Raw Data/Day1/", filepath) ~ "9",
+                                     grepl("2 Raw Data/Day2/", filepath) ~ "9",
+                                     grepl("2 Raw Data/Day3/", filepath) ~ "10",
+                                     grepl("2 Raw Data/Day4/", filepath) ~ "10",
+                                     grepl("2 Raw Data/Day5/", filepath) ~ "11",
+                                     grepl("2 Raw Data/Day6/", filepath) ~ "11",
+                                     grepl("2 Raw Data/Day7/", filepath) ~ "12",
+                                     grepl("2 Raw Data/Day8/", filepath) ~ "12"))
+                  
+}
+
+add_session2 <- function(x) {
+  x %<>% mutate(session = case_when (grepl("1 Raw Data/Day1/", filepath) ~ "1",
+                                     grepl("1 Raw Data/Day2/", filepath) ~ "1",
+                                     grepl("1 Raw Data/Day3/", filepath) ~ "1",
+                                     grepl("1 Raw Data/Day4/", filepath) ~ "1",
+                                     grepl("1 Raw Data/Day5/", filepath) ~ "1",
+                                     grepl("1 Raw Data/Day6/", filepath) ~ "1",
+                                     grepl("1 Raw Data/Day7/", filepath) ~ "1",
+                                     grepl("1 Raw Data/Day8/", filepath) ~ "1",
+                                     grepl("1 Raw Data/Day9/", filepath) ~ "1",
+                                     grepl("1 Raw Data/Day10/", filepath) ~ "1",
+                                     grepl("1 Raw Data/Day11/", filepath) ~ "1",
+                                     grepl("1 Raw Data/Day12/", filepath) ~ "1",
+                                     grepl("1 Raw Data/Day13/", filepath) ~ "1",
+                                     grepl("1 Raw Data/Day14/", filepath) ~ "1",
+                                     grepl("1 Raw Data/Day15/", filepath) ~ "1",
+                                     grepl("1 Raw Data/Day16/", filepath) ~ "1",
+                                     grepl("MOBASELINE-t1d-B4-PM", filepath) ~ "1",
+                                     grepl("2 Raw Data/Day1/", filepath) ~ "2",
+                                     grepl("2 Raw Data/Day2/", filepath) ~ "2",
+                                     grepl("2 Raw Data/Day3/", filepath) ~ "2",
+                                     grepl("2 Raw Data/Day4/", filepath) ~ "2",
+                                     grepl("2 Raw Data/Day5/", filepath) ~ "3",
+                                     grepl("2 Raw Data/Day6/", filepath) ~ "3",
+                                     grepl("2 Raw Data/Day7/", filepath) ~ "3",
+                                     grepl("2 Raw Data/Day8/", filepath) ~ "3"))
+}
+
 add_day2 <- function(x) { #adding day column for experiment 2
 x %>% mutate(day = case_when (grepl("D1", filepath) ~ "93",
                     grepl("D2", filepath) ~ "93",
@@ -352,8 +409,6 @@ e2 %>% filter(sex == "female") -> e2_female
 
 e1 -> across_cond
 
-full_join(e1, e2) -> bothexp
-
 e1 %<>% add_tod() #adding time of day to DF
 
 #changing all character variables to factors in the DFs
@@ -400,9 +455,17 @@ full_join(e1bg_reduced, e2bg_reduced) -> allbg_reduced
 ##Joining Conditions & Experiments
 ```{r Creating data sets of combined conditions and experiments, warning = F}
 ##joining single conditions and whole experiments
-#joining GREBLU and BLUGRE assays
+#joining within conditions
 full_join(allgb, allbg) -> allgbbg
 
+full_join(allgb_reduced, allbg_reduced) -> allgbbg_reduced
+
+#joining both experiments (combined data from study)
+full_join(e1, e2) -> bothexp
+
+full_join(e1_reduced, e2_reduced) -> bothexp_reduced
+
+#altering reverse learning since all subsequent assays are reverse learning
 allgbbg %<>% mutate(learning_combined = case_when (grepl("initial", learning) ~ "initial",
                                                   grepl("reverse", learning) ~ "reverse",
                                                   grepl("second", learning) ~ "reverse",
@@ -410,12 +473,43 @@ allgbbg %<>% mutate(learning_combined = case_when (grepl("initial", learning) ~ 
                                                   grepl("third", learning) ~ "reverse",
                                                   grepl("thirdreverse", learning) ~ "reverse"))
 
-full_join(allgb_reduced, allbg_reduced) -> allgbbg_reduced
+bothexp %<>% mutate(learning_combined = case_when (grepl("initial", learning) ~ "initial",
+                                                  grepl("reverse", learning) ~ "reverse",
+                                                  grepl("second", learning) ~ "reverse",
+                                                  grepl("secondreverse", learning) ~ "reverse",
+                                                  grepl("third", learning) ~ "reverse",
+                                                  grepl("thirdreverse", learning) ~ "reverse"))
+#alternate within conditons
+bothexp %>% filter(exp %in% c("BLEGRE","GREBLU")) -> within
 
-#joining both full experiments
-full_join(e1, e2) -> allexp
+#adding session to use instead of day in analysis
+bothexp %<>% add_session
 
-full_join(e1_reduced, e2_reduced) -> allexp_reduced
+bothexp %<>% mutate(session = as.numeric(session)) #change session to numeric
+
+#checking variables
+
+table(bothexp$day)
+table(bothexp$session)
+
+bothexp$day
+allgbbg$day
+
+any(is.na(bothexp$session))
+
+bothexp$session %>% 
+is.na %>% any
+
+allgbbg %<>% add_session2 %>% mutate(session = as.numeric(session))
+
+table(allgbbg$day)
+table(allgbbg$session)
+
+#alternate within conditons
+bothexp %>% filter(exp %in% c("BLUGRE","GREBLU")) -> within
+table(within$day)
+table(within$session)
+
 ```
 
 #Creating Meansurement Sets

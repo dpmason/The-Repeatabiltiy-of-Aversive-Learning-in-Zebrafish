@@ -77,7 +77,6 @@ Figure_2
 ```
 
 ## Alternative Figure 2   
-
 ```{r}
 # colours
 pref_cols <- c("Grey" = "#999999","Green" = "#009E73", "Red" = "#D55E00", "Orange" = "#E69F00")
@@ -274,13 +273,7 @@ ggsave(filename = "./Figures/Figure 2.pdf",
        device = cairo_pdf)
 ```
 
-```{r}
-
-```
-
-
-
-##Figure 3
+## Figure 3
 ```{r, Results Figure 3}
 ##forest plot showing r estimate and 95% CI, conditions grouped according to CS+
 new_cols <- c("Across" = "#000000","Green_Blue" = "#009E73", "Blue_Green" = "#56B4E9")

@@ -13,57 +13,24 @@ pacman::p_load(tidyverse, ggbeeswarm, rptR, lme4, magrittr, sjPlot, glmmTMB, lme
 load("./Data/processed_data.Rdata")
 ```
 
-#Learning models 
-##Learning Exp1
+# Learning model
+## Learning Across and Within Conditions
 ```{r}
-##basic model
-learn_model_e1 <- lmer(difference ~ scale(day) + sex + scale(fish_size) + learning + (1 | exp) + (1 | fishID), data = across_cond) #z-scaling, if you scale fish size you have to scale day as well
+#across and within conditions
+learn_model_both_combined0 <- lmer(difference ~  sex - 1 + scale(day) + scale(fish_size) + learning_combined + (1 | exp) + (1 | fishID), data = bothexp) 
+summary(learn_model_both_combined0)
 
-summary(learn_model_e1) #experiment 1 93 levels
-tab_model(learn_model_e1) #to print out model results for extraction
-
-learn_model_combined <- lmer(difference ~ scale(day) + sex + scale(fish_size) + learning_combined + (1 | exp) + (1 | fishID), data = allgbbg)
-summary(learn_model_combined)
-
-learn_model_e1_male <- lmer(difference ~ scale(day) + scale(fish_size) + learning + (1 | exp) + (1 | fishID), data = e1_male)
-
-learn_model_e1_male 
-
-learn_model_e1_female <- lmer(difference ~ scale(day) + scale(fish_size) + learning + (1 | exp) + (1 | fishID), data = e1_female)
-
-learn_model_e1_female 
+learn_model_both_combined <- lmer(difference ~  sex + scale(session) + scale(fish_size) + learning_combined + (1 | exp) + (1 | fishID), data = bothexp)
+summary(learn_model_both_combined)
+tab_model(learn_model_both_combined) #to extract model outputs
 ```
 
-##Learning Exp2
-```{r}
-learn_model_e2 <- lmer(difference ~ scale(day) + sex + scale(fish_size) + learning + (1 | exp) + (1 | fishID), data = within_cond)
-
-summary(learn_model_e2)
-tab_model(learn_model_e2)
-
-learn_model_e2_old <- lmer(difference ~ scale(day) + sex + scale(fish_size) + learning + (1 | exp) + (1 | fishID), data = e2)
-
-summary(learn_model_e2_old)
-
-learn_model_e2_male <- lmer(difference ~ scale(day) + scale(fish_size) + learning + (1 | exp) + (1 | fishID), data = e2_male)
-
-learn_model_e2_male 
-
-learn_model_e2_female <- lmer(difference ~ scale(day) + scale(fish_size) + learning + (1 | exp) + (1 | fishID), data = e2_female)
-
-learn_model_e2_female 
-
-str(e2)
-
-str(e1)
-```
-
-#Repeatability Models   
-##Across Conditions Repeatabilties
+# Repeatability Models   
+## Across Conditions Repeatabilties
 ```{r Exp 1 Analysis}
 #repeatability outputs for across 8 conditions
   
-#repetability model function for mixed sexes
+#repeatability model function for mixed sexes
 rpt_sex <- function(x, y = "") {
   
 x <- rpt(difference ~ sex + (1 | fishID), grname = "fishID", data = x, datatype = "Gaussian", nboot = 1000, npermut = 1000, adjusted = FALSE) #estimate of enhanced agree repeatability, differing from adjusted since the fixed effects variance is included in the denominator
@@ -83,15 +50,14 @@ x
 }
 ```
 
-###R Across Con
+### R Across Conditions
 ```{r}
 rpt_sex(across_cond, y = "rpt_e1") #across conditions rpt model
 rpt_nosex(e1_male, y = "rpt_e1_male") #males only
 rpt_nosex(e1_female, y = "rpt_e1_female") #females only
 ```
 
-
-##Single Condition Repeatabilties
+## R Within Conditions
 ```{r repeatabilities in single condition}
 #Green/Blue sexes separated 
 rpt_nosex(allgb_male, y = "rpt_allgb_male")
@@ -102,14 +68,14 @@ rpt_nosex(allbg_male, y = "rpt_allbg_male")
 rpt_nosex(allbg_female, y = "rpt_allbg_female")
 ```
 
-###R Green/Blue
+### R Green/Blue
 ```{r}
 rpt_sex(allgb, y = "rpt_allgb") #all GREBLU
 
 rpt_allgb
 ```
 
-###R Blue/Green
+### R Blue/Green
 ```{r}
 rpt_sex(allbg, y = "rpt_allbg") #all BLUGRE
 
@@ -167,7 +133,7 @@ rpt_set(allgbbg_male, y = "rpt_allgbbg_male")
 rpt_set(allgbbg_female, y = "rpt_allgbbg_female")
 ```
 
-##Repeatability of Colour Preference
+## Repeatability of Colour Preference
 ```{r repeatbiltiy of colour preference}
 ##rpt for colour preference
 rpt_pref <- function(x, y = "") { #function that creates df of time spent in one colour over the other in its condition
@@ -230,7 +196,7 @@ rpt_output(grey_pref) -> Grey
 rpt_output(orange_pref) -> Orange
 ```
 
-##Renaming Rpt Outputs
+## Renaming Rpt Outputs
 ```{r}
 #function for renaming output variables
 rename_output_func <- function(x) {
@@ -263,8 +229,8 @@ rename_rm_col(rbind(Across_Conditions, Green_Blue, Blue_Green, First, Second, Th
 rename_rm_col(rbind(Red, Green, Grey, Orange), c("Red", "Green", "Grey", "Orange")) -> pref_outputs
 ```
 
-#Colour Preference
-##Colour Preference Exp1 Data Wrangling
+# Colour Preference
+## Colour Preference Exp1 Data Wrangling
 ```{r Colour Preference}
 red <- "Red"
 gre <- "Green"
@@ -286,7 +252,7 @@ full_join(red_gre_gry, df_ora_pref) -> col_pref #all col prefs together in  DF
 col_pref <- mutate_if(col_pref, is.character, as.factor) #changed chr to fctr
 ```
 
-##Rpt Outputs Sex
+## Rpt Outputs Sex
 ```{r rpt outputs in sexes}
 ## separated sexes
 rpt_output(rpt_e1_male) -> Across_Male
@@ -340,7 +306,7 @@ full_join(pref_outputs, pref_outputs_sex) -> pref_outputs_all
 save.image("02_Run Models_Workspace.RData")
 ```
 
-#Contrast Analysis
+# Contrast Analysis
 ```{r}
 rpt_e1_male #1
 
@@ -369,11 +335,6 @@ q <- quantile(rptr_diff_e1, c(0.025, 0.975))
 q
 
 ### males are higher, but not significantly different from females (because the 95% CI overlaps zero)
-
-# work out how to plot!
-
-###NEED TO CREATE A DF WITH CONTRASTS ANALYSES AND MERGE WITH RPT OUTPUTS ALL TO MAKE NEW SUPP PLOT###
-###COULD TAKE OUT VARIABLES ALREADY SHOWN IN RESULTS###
 ```
 
 ##Plot Contrast Analysis
@@ -386,26 +347,6 @@ df_contrast_learn <- tibble(
   Sex = c("Male", "Female", "Mixed"))
 
 df_contrast_learn
-```
-
-
-```{r, Hamza's Example}
-plot_Tot_Dist_rptr <- ggplot(Tot_Dist_rptr, aes(x=Condition, y=r, colour=Condition)) +
-  geom_errorbar(aes(ymin=ci.lb, ymax=ci.ub), width = 0, position = position_dodge(0.3), size=1.1) +
-  geom_point(aes(x = Condition, y = r), position = position_dodge(0.3),size=3)+
-  scale_color_manual(values=c("#000000", "#339900", "#FF9900"))+
-  geom_hline(yintercept = 0, lty = "dotted") +
-  labs(y = "r") +
-  labs(title = "Repeatability estimates", subtitle = "Total distance")+
-  coord_flip()+
-   theme(axis.title.y=element_blank(),
-        axis.text.y=element_blank(),
-        axis.ticks.y=element_blank())+
-  ylim(-0.2, 0.8) +
-  theme(axis.title.x = element_blank(),
-        axis.text.x = element_blank())+
-  theme(legend.position="top")
-plot_Tot_Dist_rptr
 ```
 
 #Repeatability Tables
@@ -438,11 +379,7 @@ DF[sapply(DF, is.character)] <- lapply(DF[sapply(DF, is.character)],
 str(DF)
 }
 
-#all models originate from experiment one and should have same amount of fishID levels
-#cs_only function is the difference, without it, e1_new has 1 more level
-#groups come from e1_new and lose 2 to 3 levels
-
-#some fish don't have fish size data
+#some fish don't have fish size data as they died/missing before measurement
 
 sum(is.na(e1_new))
 sum(is.na(e1))

@@ -23,46 +23,70 @@ summary(learn_model_e1)
 
 tab_model(learn_model_e1) #output table with p-values and random effects
 
+#males experiment 1
+learn_model_e1_male <- lmer(difference ~ scale(day) + scale(fish_size) + learning + (1 | exp) + (1 | fishID), data = e1_male)
+learn_model_e1_male 
 
-test <- lmer(difference ~ scale(day) + sex + scale(fish_size) + learning + (1 | exp) + (1 | fishID), data = e2)
-summary(test)
-
-test1 <- lmer(difference ~ scale(day) + scale(fish_size) + learning + (1 | exp) + (1 | fishID), data = e2)
-summary(test1)
-
+#females experiment 1
+learn_model_e1_female <- lmer(difference ~ scale(day) + scale(fish_size) + learning + (1 | exp) + (1 | fishID), data = e1_female)
+learn_model_e1_female 
 ```
 
 ##Learning Exp2
 ```{r}
+#experiment 2 (last two sessions of within conditions)
 learn_model_e2_new <- lmer(difference ~ scale(day) + sex + scale(fish_size) + learning + (1 |exp) + (1 | fishID), data = e2_only)
 
 summary(learn_model_e2_new)
-
 tab_model(learn_model_e2_new)
+
+#within conditions
+learn_model_e2 <- lmer(difference ~ scale(day) + sex + scale(fish_size) + learning + (1 | exp) + (1 | fishID), data = within_cond)
+
+summary(learn_model_e2)
+tab_model(learn_model_e2)
+
+#experiment 2 (last two sessions of within conditions)
+learn_model_e2_old <- lmer(difference ~ scale(day) + sex + scale(fish_size) + learning + (1 | exp) + (1 | fishID), data = e2_only)
+summary(learn_model_e2_old)
+
+#experiment 2 male
+learn_model_e2_male <- lmer(difference ~ scale(day) + scale(fish_size) + learning + (1 | exp) + (1 | fishID), data = e2_male)
+
+learn_model_e2_male 
+
+#experiment 2 female
+learn_model_e2_female <- lmer(difference ~ scale(day) + scale(fish_size) + learning + (1 | exp) + (1 | fishID), data = e2_female)
+
+learn_model_e2_female 
 ```
-#Learning Within Conditions combined
+##Learning Models with Combined Data
 ```{r}
 #within conditions
-learn_model_within_combined <- lmer(difference ~ scale(day) + sex + scale(fish_size) + learning + (1|exp) + (1 | fishID), data = allgbbg)
+learn_model_within_combined0 <- lmer(difference ~ sex - 1 + scale(day) + scale(fish_size) + learning_combined + (1 | exp) + (1 | fishID), data = allgbbg)
+summary(learn_model_within_combined0)
+
+learn_model_within_combined <- lmer(difference ~ sex - 1 + scale(session) + scale(fish_size) + learning_combined + (1 | exp) + (1 | fishID), data = allgbbg)
 summary(learn_model_within_combined)
 
-test <- lmer(difference ~ scale(day) + sex + scale(fish_size) + (1 | fishID), data = allgbbg)
-summary(test)
+#extra within conditions learning model
+learn_model_gbbg <- lmer(difference ~ scale(day) + sex + scale(fish_size) + learning_combined + (1 | exp) + (1 | fishID), data = allgbbg)
+summary(learn_model_gbbg)
 
 #across and within conditions
-learn_model_both_combined <- lmer(difference ~  sex  - 1+ scale(day) + scale(fish_size) + learning_combined + (1 | exp) + (1 | fishID), data = allgbbg)
-summary(learn_model_both_combined)
+learn_model_both_combined0 <- lmer(difference ~  sex - 1 + scale(day) + scale(fish_size) + learning_combined + (1 | exp) + (1 | fishID), data = bothexp) 
+summary(learn_model_both_combined0)
 
-learn_model_both_combined <- lmer(difference ~  sex  + scale(day) + scale(fish_size) + learning_combined + (1 | exp) + (1 | fishID), data = allgbbg)
+learn_model_both_combined <- lmer(difference ~  sex + scale(session) + scale(fish_size) + learning_combined + (1 | exp) + (1 | fishID), data = bothexp)
 summary(learn_model_both_combined)
-
+tab_model(learn_model_both_combined)
 ```
-
 
 ##Check Assumptions
 ```{r}
 plot_model(learn_model_e1, type='diag') #all assumptions
 plot_model(learn_model_e2, type='diag')
+plot_model(learn_model_both_combined0, type='diag')
 
 qqnorm(residuals(learn_model_e1)) #linearity of residuals
 
@@ -347,7 +371,7 @@ summary(reverse_e2_reduced)
 ```
 
 #Organising Outputs
-01##Rpt Outputs
+##Rpt Outputs
 ```{r Formatting Repeatabiltiy Outputs} 
 #changes number of digits in output to 3
 options(digits = 3)
